@@ -24,14 +24,14 @@ class usermanagement(Adduser):
     def __init__(self, session):
         super().__init__(session)
         
-    def sign_up_user(self,Usercreate:Usercreate):
-        if(self.chk_user_email(Usercreate.email)):
-          raise HTTPException(status_code=400, detail="Email already in use")
-        Usercreate.password=encrypt.hash_passwords(Usercreate.password)
+    def sign_up_user(self, Usercreate: Usercreate, background_tasks: BackgroundTasks):
+        if self.chk_user_email(Usercreate.email):
+            raise HTTPException(status_code=400, detail="Email already in use")
+        Usercreate.password = encrypt.hash_passwords(Usercreate.password)
         print("im here")
+        # Your inline instantiation:
         background_tasks.add_task(usermanagement(self.session).send_welcome_email, Usercreate.firstname, Usercreate.email)
-        return   self.create_user(Usercreate)
-        print("im here again")
+        return self.create_user(Usercreate)
 
     
     def log_in(self,user:userinlogin):
