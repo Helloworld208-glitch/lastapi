@@ -63,7 +63,12 @@ class Adduser(Fatherclass):
       raise   auth_exeption
     payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload and payload['user_id']:
-     return self.session.query(Userr.firstname, Userr.lasttname).filter_by(id=payload['user_id']).first()
+     result = self.session.query(Userr.firstname, Userr.lasttname).filter_by(id=payload['user_id']).first()
+     if result:
+    # Explicitly convert the tuple to a dictionary
+       return {"firstname": result[0], "lastname": result[1]}
+      else:
+      raise auth_exeption
     else:
       raise auth_exeption
 
