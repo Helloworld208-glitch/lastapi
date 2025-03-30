@@ -22,7 +22,7 @@ class Adduser(Fatherclass):
       self.session.commit()
       self.session.refresh(new_user)
       print("finally")
-      self.send_welcome_email(Usercreate.firstname,Usercreate.email)
+      
       return jwtclass.jwt_gen(new_user.id)
   
 
