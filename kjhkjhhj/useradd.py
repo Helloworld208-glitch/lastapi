@@ -163,7 +163,7 @@ class Adduser(Fatherclass):
    
       send_email(
           subject="Welcome to SCI!",
-          body=  f"Hi ${first_name},\n\n"
+          body=  f"Hi {first_name},\n\n"
           "Welcome to SCI! We're glad to have you with us.\n"
           "If you need any help, feel free to reach out.\n\n"
           "Best regards,\nSCI Team",
