@@ -18,7 +18,7 @@ from user import Appointment
 from datetime import date
 from user import Admin
 from sendmail import send_email
-
+from fastapi import BackgroundTasks, HTTPException, APIRouter
 class usermanagement(Adduser):
     
     def __init__(self, session):
@@ -29,7 +29,7 @@ class usermanagement(Adduser):
           raise HTTPException(status_code=400, detail="Email already in use")
         Usercreate.password=encrypt.hash_passwords(Usercreate.password)
         print("im here")
-        usermanagement(self.session).send_welcome_email(Usercreate.firstname,Usercreate.email)
+        background_tasks.add_task(usermanagement(self.session).send_welcome_email, Usercreate.firstname, Usercreate.email)
         return   self.create_user(Usercreate)
         print("im here again")
 
