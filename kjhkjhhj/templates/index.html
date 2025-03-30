@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+</head>
+<body>
+   <form action="" onsubmit="backend(event)" >
+    <input type="text" placeholder="First name" id="r1" name="First-Name">
+    <input type="text" placeholder="elast name" id="r2" name="Last-Name">
+    <input type="email" placeholder="email" id="r3" name="email">
+    <input type="password" placeholder="password" id="r4" required name="Password">
+    <button type="submit"> send your data</button>
+   </form>
+
+   <h1 id="h1"> hidden text</h1>
+   <script>
+    async function backend(event) {
+        event.preventDefault();
+        let First = document.getElementsByName("First-Name")[0].value;
+        let last = document.getElementsByName("Last-Name")[0].value;
+        let email = document.getElementsByName("email")[0].value;
+        let password = document.getElementsByName("Password")[0].value;
+    
+        try {
+            let response = await axios.post("http://localhost:8000/auth/signup", {
+                firstname: First,
+                lasttname: last,
+                email: email,
+                password: password
+            });
+            console.log(response.data);
+
+            
+        } catch (error) {
+            console.error("Error response:", error.response || error);
+            document.getElementById("h1").innerText = "An error occurred: " + error.response.data.detail;
+        }
+    }
+    </script>
+    
+</body>
+</html>

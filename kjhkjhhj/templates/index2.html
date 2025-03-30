@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+  
+</head>
+<body>
+    <form action="" onsubmit="login(event)">
+        <input type="email" placeholder="enter your email" required id="email">
+        <input type="password" name="" id="pass" placeholder="enter password" required >
+        <button type="submit">send data</button>
+    </form>
+    <script>
+        async function login(event)
+        { event.preventDefault();
+        let email = document.getElementById("email").value;
+        let password =  document.getElementById("pass").value;
+
+
+            
+
+
+        let response =  await axios.post("http://localhost:8000/auth/login",
+        {
+          email:email,
+          password:password
+        });
+
+        if(response.data)
+        {
+            console.log(response.data);
+            localStorage.setItem("token", response.data.token);
+            window.location.replace("index.html");
+
+
+        }
+        
+        }
+
+
+</script>
+</body>
+</html>
