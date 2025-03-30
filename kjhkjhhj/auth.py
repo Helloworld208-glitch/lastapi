@@ -15,10 +15,10 @@ def auth(userinlogin: userinlogin, session=Depends(get_db)):
 
 
 
-@authentification.post("/signup")
-def signup(Usercreate: Usercreate, session = Depends(get_db) ):
-        
-        return usermanagement(session).sign_up_user(Usercreate)
+@router.post("/sign_up")
+def signup(Usercreate: Usercreate, background_tasks: BackgroundTasks, session=Depends(get_db)):
+    # Create an instance inline using your style:
+    return usermanagement(session).sign_up_user(Usercreate, background_tasks)
 
 @authentification.post("/getname")
 def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db) ):
