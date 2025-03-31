@@ -19,8 +19,9 @@ from datetime import date
 from user import Admin
 from sendmail import send_email
 from fastapi import BackgroundTasks, HTTPException, APIRouter
+AUTH_PREFIX='Bearer ' 
 class usermanagement(Adduser):
-    AUTH_PREFIX='Bearer ' 
+    
     def __init__(self, session):
     
         super().__init__(session)
