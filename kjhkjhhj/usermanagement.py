@@ -20,8 +20,9 @@ from user import Admin
 from sendmail import send_email
 from fastapi import BackgroundTasks, HTTPException, APIRouter
 class usermanagement(Adduser):
-AUTH_PREFIX='Bearer ' 
+    AUTH_PREFIX='Bearer ' 
     def __init__(self, session):
+    
         super().__init__(session)
         
     def sign_up_user(self, Usercreate: Usercreate, background_tasks: BackgroundTasks):
