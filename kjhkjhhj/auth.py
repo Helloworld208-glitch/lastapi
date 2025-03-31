@@ -56,6 +56,10 @@ def update_status_endpoint(appointmentId: int = Body(...),
         Date=Date
     )
 
+@authentification.post("/getaadminpatiens")
+def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db)):
+    
+     return usermanagement(session).get_admin_app(authorization=authorization)
 
 
 
