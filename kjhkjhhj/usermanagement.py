@@ -75,8 +75,7 @@ class usermanagement(Adduser):
         
         return   self.create_user_admin(user)
 
-   def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
-       
+    def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
         auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
         if not authorization:
           raise auth_exeption
@@ -85,7 +84,6 @@ class usermanagement(Adduser):
         payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
         print(payload['role'])
         print(payload )
-
         if payload and payload['role']=="admin":
           appointments= self.session.query(Userr).filter().all()
           return appointments
