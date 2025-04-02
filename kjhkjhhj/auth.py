@@ -63,7 +63,7 @@ def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Dep
     
      return usermanagement(session).get_admin_app(authorization=authorization)
 @authentification.post("/adminuploadtouser")
-async def auth(file: UploadFile = File(...),email=EmailStr,authorization:Annotated[Union[str,None],Header()]=None,session=Depends(get_db) ):
+async def auth(email=EmailStr,file: UploadFile = File(...),authorization:Annotated[Union[str,None],Header()]=None,session=Depends(get_db) ):
        if not file.content_type.startswith("image/"):
          return {"error": "Invalid file type, only images are allowed!"}
        usermanagement(session=session).chk_pic(file=file,email=email,authentification=authentification)
