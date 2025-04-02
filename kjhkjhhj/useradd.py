@@ -12,6 +12,14 @@ from schema import datemodel
 from sendmail import send_email
 from typing import Annotated,Union
 from pydantic import EmailStr
+from fastapi import UploadFile, File, HTTPException, Body, Header
+from fastapi.responses import JSONResponse
+from pydantic import EmailStr
+import numpy as np
+import tensorflow as tf
+from PIL import Image
+import io
+
 
 AUTH_PREFIX='Bearer ' 
 
@@ -176,4 +184,37 @@ class Adduser(Fatherclass):
           "Best regards,\nSCI Team",
           to=mail
       )
-      
+      async def  results(file: UploadFile = File(...)):
+    # Step 3: Read the uploaded file
+    img = Image.open(io.BytesIO(await file.read()))
+    img = img.convert("RGB")  
+    img = img.resize((224, 224))  
+    img_array = np.array(img)  
+
+    # Step 4: Make a prediction
+    prediction = model.predict(np.expand_dims(img_array, axis=0))
+
+    
+    probabilities = tf.nn.softmax(prediction).numpy()
+    predicted_class_idx = np.argmax(probabilities)
+    confidence = probabilities[0][predicted_class_idx]
+
+    
+    return JSONResponse(content={
+        "predicted_class": class_names[predicted_class_idx],
+        "confidence": f"{confidence:.2%}"})
+
+
+
+ async def callai(self,file: UploadFile = File(...),user_id= Body(...)|None,email=EmailStr,authorization:Annotated[Union[str,None],Header()]=None ):
+        auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
+        if not authorization:
+          raise auth_exeption
+        if not authorization.startswith(AUTH_PREFIX):
+          raise auth_exeption
+        payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+        print(payload['role'])
+        print(payload )
+        if payload and payload['role']=="admin":
+           result = await results(file) 
+           return result
