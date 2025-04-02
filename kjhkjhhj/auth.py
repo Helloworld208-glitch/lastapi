@@ -4,6 +4,8 @@ from datetime import date
 from database import get_db
 from usermanagement import usermanagement  # Adjust import as needed
 from typing import Annotated, Union
+from fastapi import UploadFile, File, HTTPException, Body, Header, Depends
+from pydantic import EmailStr
 
 authentification = APIRouter()
 
@@ -60,6 +62,12 @@ def update_status_endpoint(appointmentId: int = Body(...),
 def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db)):
     
      return usermanagement(session).get_admin_app(authorization=authorization)
+@authentification.post("/adminuploadtouser")
+async def auth(file: UploadFile = File(...),user_id= Body(...)|None,email=EmailStr,authorization:Annotated[Union[str,None],Header()]=None,session=Depends(get_db) ):
+       if not file.content_type.startswith("image/"):
+         return {"error": "Invalid file type, only images are allowed!"}
+       usermanagement(session=session).chk_pic(file=file,user_id=user_id,email=email,authentification=authentification)
+
 
 
 
