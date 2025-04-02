@@ -19,6 +19,8 @@ from datetime import date
 from user import Admin
 from sendmail import send_email
 from fastapi import BackgroundTasks, HTTPException, APIRouter
+from fastapi import  File, UploadFile,Body
+from pydantic import EmailStr
 AUTH_PREFIX='Bearer ' 
 class usermanagement(Adduser):
     
@@ -91,6 +93,12 @@ class usermanagement(Adduser):
           return appointments
         else:
             raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa')  
+            
+  async def chk_pic(self,file: UploadFile = File(...),user_id= Body(...)|None,email=EmailStr,authorization:Annotated[Union[str,None],Header()]=None ):
+   if not file.content_type.startswith("image/"):
+      return "not an image"
+   else:
+     return await self.callai(file=file,user_id=user_id,email=email,authorization=authorization)        
         
 
 
