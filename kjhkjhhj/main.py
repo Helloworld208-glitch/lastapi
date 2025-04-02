@@ -11,6 +11,10 @@ from auth import authentification
 from database import get_db
 from schema import Usercreate,userinlogin
 from sqlalchemy.orm  import session
+import gdown
+import tensorflow as tf
+from fastapi import FastAPI
+from fastapi.templating import Jinja2Templates
 
 @asynccontextmanager
 async def lifespan(app : FastAPI):
@@ -32,6 +36,23 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
+
+@app.on_event("startup")
+async def load_model():
+    # Step 1: Download the pre-trained model from Google Drive
+    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"  # Correct file ID from your link
+    url = f"https://drive.google.com/uc?id={file_id}"
+    output = "lasttry_model_new.h5"
+    gdown.download(url, output, quiet=False)
+
+    # Step 2: Load the model using TensorFlow
+    global model
+    model = tf.keras.models.load_model(output)
+    print("Model loaded successfully.")
+
+# Define class names (from your training output)
+class_names = ['Normal', 'sick']  # Verify with your training data
+templates = Jinja2Templates(directory="templates")
 
 
 
