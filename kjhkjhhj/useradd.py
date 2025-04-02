@@ -205,9 +205,9 @@ class Adduser(Fatherclass):
         "confidence": f"{confidence:.2%}"})
 
 
-  async def callai(self,
+  async def callai(self,email: EmailStr,
     file: UploadFile = File(...),
-    email: EmailStr,
+    
     authorization: Annotated[Union[str, None], Header()] = None):
         auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
         if not authorization:
