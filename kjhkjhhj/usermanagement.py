@@ -94,7 +94,7 @@ class usermanagement(Adduser):
         else:
             raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa')  
             
-    async def chk_pic(self,file: UploadFile = File(...),email=EmailStr,authorization:Annotated[Union[str,None],Header()]=None ):
+    async def chk_pic(self,file: UploadFile = File(...),email:EmailStr,authorization:Annotated[Union[str,None],Header()]=None ):
      if not file.content_type.startswith("image/"):
        return "not an image"
      else:
