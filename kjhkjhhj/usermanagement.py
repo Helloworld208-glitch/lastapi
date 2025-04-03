@@ -73,5 +73,3 @@ class usermanagement(Adduser):
             authorization=authorization
         )
 
-
-
