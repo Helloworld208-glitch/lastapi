@@ -1,58 +1,51 @@
-import os
-import logging
-from pathlib import Path
-from contextlib import asynccontextmanager
-
-import gdown
-import tensorflow as tf
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import HTMLResponse
+from contextlib import asynccontextmanager
+import gdown
+import tensorflow as tf
+import os
+from pathlib import Path  # Absolute path handling
 from auth import authentification  # Your auth routes
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Define the Google Drive file ID (verified working) and local model path
-MODEL_FILE_ID = "14UIKtvFJ9LaprvAyUp-qKzrhrTzbn2_R"
-MODEL_PATH = Path(__file__).parent.resolve() / "lasttry_model_new.h5"
+# Update with the new file ID
+MODEL_FILE_ID = "your_new_file_id_here"  # Replace with the new file ID for lasttry2_model_new.h5
+MODEL_PATH = Path(__file__).parent.resolve() / "lasttry2_model_new.h5"  # Update model file name
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Initialize the database tables
+    # Database init (from your original code)
     from init_db import createtables
     createtables()
     
     try:
-        # If the model file does not exist, download it
+        # Model download with validation
         if not MODEL_PATH.exists():
-            logger.info("Downloading model to %s...", MODEL_PATH)
+            print(f"Downloading model to {MODEL_PATH}...")
             url = f"https://drive.google.com/uc?id={MODEL_FILE_ID}"
             gdown.download(url, str(MODEL_PATH), quiet=False)
             
-        # Validate the downloaded file (basic integrity check)
+        # File integrity check
         if MODEL_PATH.stat().st_size < 1024:
-            raise OSError("Downloaded model file is corrupt or too small.")
-        
-        # Load the model into application state
-        app.state.model = tf.keras.models.load_model(str(MODEL_PATH))
-        logger.info("Model loaded from: %s", MODEL_PATH)
+            raise OSError("Downloaded model file is corrupt")
+            
+        app.state.model = tf.keras.models.load_model(MODEL_PATH)
+        print(f"Model loaded from: {MODEL_PATH}")
         
     except Exception as e:
-        logger.error("Startup failed: %s", str(e))
-        logger.error("Attempted path: %s", MODEL_PATH)
-        logger.error("Verify:\n1. Google Drive file is shared publicly\n2. Network connectivity")
+        print(f"Startup failed: {str(e)}")
+        print(f"Attempted path: {MODEL_PATH}")
+        print("Verify:")
+        print("1. Google Drive file is shared publicly")
+        print("2. Network connectivity")
         raise
     
     yield
 
-# Create FastAPI instance with lifespan management
 app = FastAPI(lifespan=lifespan)
 
-# Set up CORS middleware to allow all origins
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -61,10 +54,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include auth routes
+# Auth routes
 app.include_router(authentification, prefix="/auth", tags=["auth"])
 
-# Set up Jinja2 templates directory
+# Templates
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
@@ -80,6 +73,5 @@ async def health_check():
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    logger.info("Starting server on port %s...", port)
+    print(f"Starting server on port {port}...")  # Port verification
     uvicorn.run(app, host="0.0.0.0", port=port)
-
