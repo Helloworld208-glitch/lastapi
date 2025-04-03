@@ -19,10 +19,14 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 import io
-from main import model
+from fastapi import UploadFile, File, Request
+from PIL import Image
+import numpy as np
+import tensorflow as tf
+from fastapi.responses import JSONResponse
 
 AUTH_PREFIX='Bearer ' 
-
+class_names = ['Normal', 'sick']
 class Adduser(Fatherclass):
   def create_user(self,Usercreate: Usercreate):
       new_user = Userr(**Usercreate.dict(exclude_none=True))
@@ -184,25 +188,26 @@ class Adduser(Fatherclass):
           "Best regards,\nSCI Team",
           to=mail
       )
-  async def  results(self ,file: UploadFile = File(...)):
-    # Step 3: Read the uploaded file
+  async def results(request: Request, file: UploadFile = File(...)):
+    # Read the uploaded file
     img = Image.open(io.BytesIO(await file.read()))
-    img = img.convert("RGB")  
-    img = img.resize((224, 224))  
-    img_array = np.array(img)  
+    img = img.convert("RGB")
+    img = img.resize((224, 224))
+    img_array = np.array(img)
 
-    # Step 4: Make a prediction
+    # Access the model from the application state
+    model = request.app.state.model
+
+    # Make a prediction
     prediction = model.predict(np.expand_dims(img_array, axis=0))
-
-    
     probabilities = tf.nn.softmax(prediction).numpy()
     predicted_class_idx = np.argmax(probabilities)
     confidence = probabilities[0][predicted_class_idx]
 
-    
     return JSONResponse(content={
         "predicted_class": class_names[predicted_class_idx],
-        "confidence": f"{confidence:.2%}"})
+        "confidence": f"{confidence:.2%}"
+    })
 
 
   async def callai(self,email: EmailStr,
