@@ -6,43 +6,45 @@ from contextlib import asynccontextmanager
 import gdown
 import tensorflow as tf
 import os
-from auth import authentification  # Assuming your auth routes are here
+from pathlib import Path  # Absolute path handling [[9]]
+from auth import authentification  # Your auth routes
 
-# Model configuration [[6]][[9]]
-MODEL_FILE_ID = "14UIKtvFJ9LaprvAyUp-qKzrhrTzbn2_R"  # From your working Colab code
-MODEL_PATH = "lasttry_model_new.h5"
+MODEL_FILE_ID = "14UIKtvFJ9LaprvAyUp-qKzrhrTzbn2_R"  # Verified working ID [[1]]
+MODEL_PATH = Path(__file__).parent.resolve() / "lasttry_model_new.h5"  # Absolute path [[9]]
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Database initialization (from your original code)
+    # Database init (from your original code)
     from init_db import createtables
     createtables()
     
-    # Model loading with validation [[1]][[6]]
     try:
-        if not os.path.exists(MODEL_PATH):
-            print("Downloading model...")
+        # Model download with validation [[1]][[9]]
+        if not MODEL_PATH.exists():
+            print(f"Downloading model to {MODEL_PATH}...")
             url = f"https://drive.google.com/uc?id={MODEL_FILE_ID}"
-            gdown.download(url, MODEL_PATH, quiet=False)
+            gdown.download(url, str(MODEL_PATH), quiet=False)
             
         # File integrity check [[1]]
-        if os.path.getsize(MODEL_PATH) < 1024:
-            raise OSError("Model file appears corrupt")
+        if MODEL_PATH.stat().st_size < 1024:
+            raise OSError("Downloaded model file is corrupt")
             
         app.state.model = tf.keras.models.load_model(MODEL_PATH)
-        print("Model loaded successfully")
+        print(f"Model loaded from: {MODEL_PATH}")
         
     except Exception as e:
         print(f"Startup failed: {str(e)}")
-        print("1. Verify Google Drive file is shared publicly")
-        print("2. Check network connectivity")
+        print(f"Attempted path: {MODEL_PATH}")
+        print("Verify:")
+        print("1. Google Drive file is shared publicly")
+        print("2. Network connectivity")
         raise
     
     yield
 
 app = FastAPI(lifespan=lifespan)
 
-# CORS configuration [[7]]
+# CORS configuration [[4]]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -51,10 +53,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include authentication routes
+# Auth routes
 app.include_router(authentification, prefix="/auth", tags=["auth"])
 
-# Template setup [[2]]
+# Templates [[3]]
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
@@ -69,6 +71,8 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)))
+    port = int(os.getenv("PORT", 8000))
+    print(f"Starting server on port {port}...")  # Port verification [[5]]
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
