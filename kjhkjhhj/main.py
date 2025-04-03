@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse  # Corrected here
-from fastapi.middleware.cors import CORSMiddleware  # Corrected here
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from dotenv import load_dotenv
 import os
@@ -16,36 +16,37 @@ import tensorflow as tf
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Startup code
     createtables()
-    yield print('db is up now')
+    
+    # Download and load model
+    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"
+    url = f"https://drive.google.com/uc?id={file_id}"
+    output = "lasttry_model_new.h5"
+    gdown.download(url, output, quiet=False)
+    model = tf.keras.models.load_model(output)
+    app.state.model = model  # Store model in app state
+    print("Model loaded successfully.")
+    
+    yield  # This line was corrected
+    
+    # Shutdown code (if needed)
+    print("Shutting down...")
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router=authentification, tags=["auth"], prefix="/auth")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-@app.on_event("startup")
-async def load_model():
-    # Step 1: Download the pre-trained model from Google Drive
-    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"  # Correct file ID from your link
-    url = f"https://drive.google.com/uc?id={file_id}"
-    output = "lasttry_model_new.h5"
-    gdown.download(url, output, quiet=False)
+# Removed the @app.on_event("startup") decorator and load_model function
 
-    # Step 2: Load the model using TensorFlow
-    global model
-    model = tf.keras.models.load_model(output)
-    app.state.model = model 
-    print("Model loaded successfully.")
-
-# Define class names (from your training output)
-class_names = ['Normal', 'sick']  # Verify with your training data
+class_names = ['Normal', 'sick']
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
@@ -56,10 +57,7 @@ async def read_index(request: Request):
 def do(text: str):
     return f"{text} ,your code is delivered to backend and treated"
 
-import os
-import uvicorn
-
 if __name__ == "__main__":
+    import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
-
