@@ -62,13 +62,26 @@ def update_status_endpoint(appointmentId: int = Body(...),
 def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db)):
     
      return usermanagement(session).get_admin_app(authorization=authorization)
-@authentification.post("/adminuploadtouser")
-async def auth(email:EmailStr = Form(...),file: UploadFile = File(...),authorization:Annotated[Union[str,None],Header()]=None,session=Depends(get_db) ):
-       if not file.content_type.startswith("image/"):
-         return {"error": "Invalid file type, only images are allowed!"}
-       result= await usermanagement(session=session).chk_pic(file=file,email=email,authorization=authorization)
-       return result 
+from fastapi import Request  # Add import
 
+@authentification.post("/adminuploadtouser")
+async def auth(
+    request: Request,  # Add request parameter
+    email: EmailStr = Form(...),
+    file: UploadFile = File(...),
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session=Depends(get_db)
+):
+    if not file.content_type.startswith("image/"):
+        return {"error": "Invalid file type, only images are allowed!"}
+    # Pass request to chk_pic
+    result = await usermanagement(session=session).chk_pic(
+        request=request,  # Forward request
+        file=file,
+        email=email,
+        authorization=authorization
+    )
+    return result
 
 
 
