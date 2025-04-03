@@ -24,7 +24,7 @@ from PIL import Image
 import numpy as np
 import tensorflow as tf
 from fastapi.responses import JSONResponse
-
+import keras
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
 class Adduser(Fatherclass):
