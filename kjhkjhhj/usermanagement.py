@@ -95,8 +95,13 @@ class usermanagement(Adduser):
             raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa')  
             
     async def chk_pic(self, request: Request, file: UploadFile, email: EmailStr, authorization: str):
-        
-        result = await self.callai(request, email, file, authorization)
+    # Forward request to callai
+        result = await self.callai(
+            request=request,  # Pass request
+            email=email,
+            file=file,
+            authorization=authorization
+        )
         return result
 
 
