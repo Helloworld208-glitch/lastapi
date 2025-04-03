@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
     # Download and load model
     file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"
     url = f"https://drive.google.com/uc?id={file_id}"
-    output = "lasttry2_model_new.h5"
+    output = "lasttry_model_new.h5"
     gdown.download(url, output, quiet=False)
     if not os.path.exists(output):
         raise RuntimeError("Failed to download the model.")
