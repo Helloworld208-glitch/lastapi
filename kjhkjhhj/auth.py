@@ -66,8 +66,8 @@ def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Dep
 async def auth(email:EmailStr = Form(...),file: UploadFile = File(...),authorization:Annotated[Union[str,None],Header()]=None,session=Depends(get_db) ):
        if not file.content_type.startswith("image/"):
          return {"error": "Invalid file type, only images are allowed!"}
-       return await usermanagement(session=session).chk_pic(file=file,email=email,authorization=authorization)
-
+       result= await usermanagement(session=session).chk_pic(file=file,email=email,authorization=authorization)
+       return result 
 
 
 
