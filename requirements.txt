@@ -20,4 +20,4 @@ python-multipart==0.0.5   # specify version
 # Option 2: If you prefer standalone Keras, pin a compatible version:
 keras==2.12.0
 # If kerasfastapi is required for integration, ensure its version matches your FastAPI version:
-kerasfastapi==0.100.0
+
