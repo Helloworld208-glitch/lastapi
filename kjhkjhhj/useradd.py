@@ -19,7 +19,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image
 import io
-
+from main import model
 
 AUTH_PREFIX='Bearer ' 
 
