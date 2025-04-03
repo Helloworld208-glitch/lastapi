@@ -1,66 +1,77 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.staticfiles import StaticFiles
-from dotenv import load_dotenv
-import os
-from contextlib import asynccontextmanager
-from init_db import createtables
-from auth import authentification
-from database import get_db
+from useradd import Adduser
 from schema import Usercreate, userinlogin
-from sqlalchemy.orm import session
-import gdown
-import tensorflow as tf
+from security.codingdata import encrypt
+from security.jwt import jwtclass
+from fastapi import HTTPException, Header, status, File, UploadFile, Body
+from user import Userr, Appointment, Admin
+from database import get_db
+from pydantic import EmailStr
+from datetime import date
+from sendmail import send_email
+from typing import Annotated, Union
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup code
-    createtables()
-    
-    # Download and load model
-    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"
-    url = f"https://drive.google.com/uc?id={file_id}"
-    output = "lasttry_model_new.h5"
-    gdown.download(url, output, quiet=False)
-    model = tf.keras.models.load_model(output)
-    app.state.model = model  # Store model in app state
-    print("Model loaded successfully.")
-    
-    yield  # This line was corrected
-    
-    # Shutdown code (if needed)
-    print("Shutting down...")
+class usermanagement(Adduser):
+    def __init__(self, session):
+        super().__init__(session)
+        
+    def sign_up_user(self, user: Usercreate):  # Fixed type annotation
+        if self.chk_user_email(user.email):
+            raise HTTPException(status_code=400, detail="Email already in use")
+        user.password = encrypt.hash_passwords(user.password)
+        self.send_welcome_email(user.firstname, user.email)
+        return self.create_user(user)
 
-app = FastAPI(lifespan=lifespan)
-app.include_router(router=authentification, tags=["auth"], prefix="/auth")
+    def log_in(self, user: userinlogin):
+        if self.chk_user_email(user.email):
+            encryptedpass = self.get_user_by_email(user.email).password
+            if encrypt.testing_password(user.password, encryptedpass):
+                return jwtclass.jwt_gen(user_id=self.get_user_id(user))
+            else:
+                raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise HTTPException(status_code=400, detail="Account not found")
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+    def get_user_name(self, authorization: Annotated[Union[str, None], Header()] = None):
+        return self.get_user_name_by_id(authorization=authorization)
 
-# Removed the @app.on_event("startup") decorator and load_model function
+    def book_Appointement(self, 
+                         appointment_date: date, 
+                         authorization: Annotated[Union[str, None], Header()] = None):
+        return self.add_Appointement(appointment_date=appointment_date, authorization=authorization)
 
-class_names = ['Normal', 'sick']
-templates = Jinja2Templates(directory="templates")
+    def get_Appointement(self, authorization: Annotated[Union[str, None], Header()] = None):
+        return self.get_Appointements(authorization=authorization)
 
-@app.get("/", response_class=HTMLResponse)
-async def read_index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    def admin_log_in(self, user: userinlogin):
+        if self.chk_user_email(user.email):
+            encryptedpass = self.get_user_by_email(user.email).password
+            user_id = self.get_user_id(user)
+            if (encrypt.testing_password(user.password, encryptedpass) and
+                self.session.query(Admin).filter_by(user_id=user_id).first().role == "admin"):
+                return jwtclass.jwt_gen_admin(user_id=user_id)
+            raise HTTPException(status_code=400, detail="Invalid admin credentials")
+        raise HTTPException(status_code=400, detail="Account not found")
 
-@app.post('/data/{text}')
-def do(text: str):
-    return f"{text} ,your code is delivered to backend and treated"
+    def get_Appointement_admin(self, authorization: Annotated[Union[str, None], Header()] = None):
+        return self.get_Appointements2(authorization=authorization)
 
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    def sign_up_admin(self, user: userinlogin):
+        return self.create_user_admin(user)
+
+    async def chk_pic(
+        self,
+        file: UploadFile = File(...),
+        user_id: int = Body(...),  
+        email: EmailStr = Body(...),  
+        authorization: Annotated[Union[str, None], Header()] = None
+    ):
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Not an image file")
+        return await self.callai(
+            file=file,
+            user_id=user_id,
+            email=email,
+            authorization=authorization
+        )
 
 
 
