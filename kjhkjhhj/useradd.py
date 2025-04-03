@@ -188,7 +188,7 @@ class Adduser(Fatherclass):
           "Best regards,\nSCI Team",
           to=mail
       )
-  async def results(request: Request, file: UploadFile = File(...)):
+  async def results(self, request: Request, file: UploadFile):
     # Read the uploaded file
     img = Image.open(io.BytesIO(await file.read()))
     img = img.convert("RGB")
