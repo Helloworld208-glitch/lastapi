@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi import FastAPI, Request, HTTPException, Depends, Form, UploadFile, File, status
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
-from dotenv import load_dotenv
-import os
+from pydantic import EmailStr
+from typing import Union, Annotated
 from contextlib import asynccontextmanager
 from init_db import createtables
 from auth import authentification
@@ -13,6 +13,13 @@ from schema import Usercreate, userinlogin
 from sqlalchemy.orm import session
 import gdown
 import tensorflow as tf
+import io
+from PIL import Image
+import numpy as np
+import os
+
+class_names = ['Normal', 'sick']
+templates = Jinja2Templates(directory="templates")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,11 +31,13 @@ async def lifespan(app: FastAPI):
     url = f"https://drive.google.com/uc?id={file_id}"
     output = "lasttry2_model_new.h5"
     gdown.download(url, output, quiet=False)
+    if not os.path.exists(output):
+        raise RuntimeError("Failed to download the model.")
     model = tf.keras.models.load_model(output)
     app.state.model = model  # Store model in app state
     print("Model loaded successfully.")
     
-    yield  # This line was corrected
+    yield
     
     # Shutdown code (if needed)
     print("Shutting down...")
@@ -43,11 +52,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Removed the @app.on_event("startup") decorator and load_model function
-
-class_names = ['Normal', 'sick']
-templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index(request: Request):
