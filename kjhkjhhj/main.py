@@ -41,6 +41,7 @@ async def load_model():
     # Step 2: Load the model using TensorFlow
     global model
     model = tf.keras.models.load_model(output)
+    app.state.model = model 
     print("Model loaded successfully.")
 
 # Define class names (from your training output)
