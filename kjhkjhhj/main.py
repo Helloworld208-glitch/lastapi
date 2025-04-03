@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.templating import Jinja2Templates
-from fastAPI.responses import HTMLResponse
-from fastAPI.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse  # Corrected here
+from fastapi.middleware.cors import CORSMiddleware  # Corrected here
 from starlette.staticfiles import StaticFiles
 from dotenv import load_dotenv
 import os
@@ -61,3 +61,4 @@ import uvicorn
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
