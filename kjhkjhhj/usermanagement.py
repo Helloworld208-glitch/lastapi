@@ -98,8 +98,8 @@ class usermanagement(Adduser):
      if not file.content_type.startswith("image/"):
        return "not an image"
      else:
-       return await self.callai(file=file,email=email,authorization=authorization)        
-        
+       result= await self.callai(file=file,email=email,authorization=authorization)        
+       return result 
 
 
 
