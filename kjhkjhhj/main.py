@@ -15,7 +15,7 @@ import gdown
 import tensorflow as tf
 from fastapi import FastAPI
 from fastapi.templating import Jinja2Templates
-
+from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app : FastAPI):
     createtables()
@@ -38,21 +38,16 @@ app.add_middleware(
 
 
 @app.on_event("startup")
-async def load_model():
-    # Step 1: Download the pre-trained model from Google Drive
-    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"  # Correct file ID from your link
+async def lifespan(app: FastAPI):
+    # Download the pre-trained model from Google Drive
+    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"
     url = f"https://drive.google.com/uc?id={file_id}"
     output = "lasttry_model_new.h5"
     gdown.download(url, output, quiet=False)
 
-    # Step 2: Load the model using TensorFlow
-    global model
-    model = tf.keras.models.load_model(output)
+    # Load the model using TensorFlow
+    app.state.model = tf.keras.models.load_model(output)
     print("Model loaded successfully.")
-
-# Define class names (from your training output)
-class_names = ['Normal', 'sick']  # Verify with your training data
-templates = Jinja2Templates(directory="templates")
 
 
 
