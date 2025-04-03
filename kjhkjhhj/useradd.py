@@ -218,5 +218,5 @@ class Adduser(Fatherclass):
         print(payload['role'])
         print(payload )
         if payload and payload['role']=="admin":
-           result = await results(file) 
+           result = await self.results(file) 
            return result
