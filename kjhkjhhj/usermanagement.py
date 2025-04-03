@@ -1,109 +1,66 @@
-from useradd import Adduser
-from schema import Usercreate,userinlogin
-from security.codingdata import encrypt
-from security.jwt import jwtclass
-from fastapi import HTTPException
-from user import Userr
+from fastapi import FastAPI, Request, HTTPException, Depends
+from fastapi.templating import Jinja2Templates
+from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.staticfiles import StaticFiles
+from dotenv import load_dotenv
+import os
+from contextlib import asynccontextmanager
+from init_db import createtables
+from auth import authentification
 from database import get_db
-from base import Fatherclass
-from schema import Usercreate,userinlogin
-from user import Userr
-from security.jwt import  jwtclass
-from typing import Annotated,Union
-import pydantic
-from fastapi import Header,HTTPException,status
-import security.jwt
-from useradd import Fatherclass
-from user import Appointment
-from datetime import date
-from user import Admin
-from sendmail import send_email
-from fastapi import BackgroundTasks, HTTPException, APIRouter
-from fastapi import  File, UploadFile,Body
-from pydantic import EmailStr
-from fastapi import Request
-AUTH_PREFIX='Bearer ' 
-class usermanagement(Adduser):
-    
-    def __init__(self, session):
-    
-        super().__init__(session)
-        
-    def sign_up_user(self, Usercreate: Usercreate, background_tasks: BackgroundTasks):
-        if self.chk_user_email(Usercreate.email):
-            raise HTTPException(status_code=400, detail="Email already in use")
-        Usercreate.password = encrypt.hash_passwords(Usercreate.password)
-        print("im here")
-        # Your inline instantiation:
-        background_tasks.add_task(usermanagement(self.session).send_welcome_email, Usercreate.firstname, Usercreate.email)
-        return self.create_user(Usercreate)
+from schema import Usercreate, userinlogin
+from sqlalchemy.orm import session
+import gdown
+import tensorflow as tf
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup code
+    createtables()
     
-    def log_in(self,user:userinlogin):
-        if(self.chk_user_email(user.email)):
-          encryptedpass=self.session.query(Userr).filter_by(email=user.email).first().password
-          encryptedpass=self.get_user_by_email(user.email).password
-          if(encrypt.testing_password(user.password,encryptedpass)):
-             return jwtclass.jwt_gen(user_id=self.get_user_id(user))
-          else:
-              raise HTTPException(status_code=400, detail="please check yout inputs") 
-        raise HTTPException(status_code=400, detail="account not found")
+    # Download and load model
+    file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"
+    url = f"https://drive.google.com/uc?id={file_id}"
+    output = "lasttry_model_new.h5"
+    gdown.download(url, output, quiet=False)
+    model = tf.keras.models.load_model(output)
+    app.state.model = model  # Store model in app state
+    print("Model loaded successfully.")
     
-    def get_user_name(self, authorization:Annotated[Union[str,None],Header()]=None):
-       return self.get_user_name_by_id(authorization= authorization)
+    yield  # This line was corrected
     
+    # Shutdown code (if needed)
+    print("Shutting down...")
 
-    def book_Appointement(self,appointment_date:date,authorization:Annotated[Union[str,None],Header()]=None):
-       return self.add_Appointement(appointment_date=appointment_date,authorization=authorization)
-    
+app = FastAPI(lifespan=lifespan)
+app.include_router(router=authentification, tags=["auth"], prefix="/auth")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+# Removed the @app.on_event("startup") decorator and load_model function
 
-    def get_Appointement(self,authorization:Annotated[Union[str,None],Header()]=None):
-       return self.get_Appointements(authorization=authorization)
+class_names = ['Normal', 'sick']
+templates = Jinja2Templates(directory="templates")
 
-    def admin_log_in(self,user:userinlogin):
-        if(self.chk_user_email(user.email)):
-          encryptedpass=self.session.query(Userr).filter_by(email=user.email).first().password
-          encryptedpass=self.get_user_by_email(user.email).password
-          userr=self.get_user_id(user)
-          if(encrypt.testing_password(user.password,encryptedpass)) and self.session.query(Admin).filter_by(user_id=userr).first().role=="admin":
-             return jwtclass.jwt_gen_admin(user_id=self.get_user_id(user))
-          else:
-              raise HTTPException(status_code=400, detail="please check yout inputs") 
-        raise HTTPException(status_code=400, detail="account not found")       
-    def get_Appointement_admin(self,authorization:Annotated[Union[str,None],Header()]=None):
-       return self.get_Appointements2(authorization=authorization) 
-    
-    def sign_up_admin(self,user:userinlogin):
-       
-        
-        return   self.create_user_admin(user)
+@app.get("/", response_class=HTMLResponse)
+async def read_index(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-    def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
-        auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
-        if not authorization:
-          raise auth_exeption
-        if not authorization.startswith(AUTH_PREFIX):
-          raise auth_exeption
-        payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
-        print(payload['role'])
-        print(payload )
-        if payload and payload['role']=="admin":
-          appointments= self.session.query(Userr).filter().all()
-          return appointments
-        else:
-            raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa')  
-            
-    async def chk_pic(self, request: Request, file: UploadFile, email: EmailStr, authorization: str):
-    # Forward request to callai
-        result = await self.callai(
-            request=request,  # Pass request
-            email=email,
-            file=file,
-            authorization=authorization
-        )
-        return result
+@app.post('/data/{text}')
+def do(text: str):
+    return f"{text} ,your code is delivered to backend and treated"
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 
