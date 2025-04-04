@@ -44,3 +44,4 @@ def send_email_with_pdf(subject: str, body: str, to: str, pdf_buffer: io.BytesIO
         smtp.set_debuglevel(1)  # Enable debug output
         smtp.login(username, app_password)
         smtp.send_message(msg)
+    return "hello guys im working"    
