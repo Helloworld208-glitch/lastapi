@@ -214,7 +214,7 @@ class Adduser(Fatherclass):
     predicted_class_idx = np.argmax(probabilities)
     confidence = probabilities[0][predicted_class_idx]
     file.file.seek(0)
-    return  await create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=confidence,email=email)
+    return  await create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=round(confidence, 2),email=email)
 
 
   async def callai(
@@ -281,7 +281,7 @@ async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,conf
     if predicted_class.lower() == "sick":
         additional_msg = (
             "\nWe are sorry to tell you that the analysis indicates a potential issue.\n"
-            "Please consult a healthcare professional for further diagnosis and do not rely solely on these results."
+            "Please consult a healthcare professional for further \n\n diagnosis and do not rely solely on these results."
         )
         text_object = c.beginText(50, img_y - 140)
         for line in additional_msg.splitlines():
@@ -292,18 +292,22 @@ async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,conf
     disclaimer = (
         "This is an AI student project. Please consult a real doctor and do not rely solely on these results.\n"
         "If you notice any mistake, please contact support.\n\n"
-        "Disclaimer: This is a student project prototype under active development. "
+        "Disclaimer: This is a student project prototype under active development.\n\n "
         "The AI classification feature is not yet functional, and its results are not guaranteed to be accurate."
-    )
+    
     c.setFont("Helvetica-Oblique", 10)
     disclaimer_text = c.beginText(50, 100)
     for line in disclaimer.splitlines():
         disclaimer_text.textLine(line)
     c.drawText(disclaimer_text)
+    sci_team_message = "SCI Team"
+    c.setFont("Helvetica-Bold", 12)
+    team_message_width = c.stringWidth(sci_team_message, "Helvetica-Bold", 12)
+    c.drawString((width - team_message_width) / 2, 50, sci_team_message)
 
     # Finalize the PDF
     c.showPage()
     c.save()
     pdf_buffer.seek(0)
     
-    return send_email_with_pdf(subject="testing mail", body="this is your scac result sci team", to=email, pdf_buffer=pdf_buffer)
+    return send_email_with_pdf(subject="result testing  mail", body = "Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available should you have any questions or need further assistance.\n\nBest regards,\nSCI Team", to=email, pdf_buffer=pdf_buffer)
