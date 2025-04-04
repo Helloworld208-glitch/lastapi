@@ -303,4 +303,4 @@ async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,conf
     c.save()
     pdf_buffer.seek(0)
     
-    return send_email_with_pdf(subject="testing mail", body="this is your scac result sci team", to=email, pdf_buffer=pdf_buffer):
+    return send_email_with_pdf(subject="testing mail", body="this is your scac result sci team", to=email, pdf_buffer=pdf_buffer)
