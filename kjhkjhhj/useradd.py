@@ -25,6 +25,12 @@ import numpy as np
 import tensorflow as tf
 from fastapi.responses import JSONResponse
 import keras
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from PIL import Image
+from fastapi import UploadFile
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
 class Adduser(Fatherclass):
@@ -203,11 +209,8 @@ class Adduser(Fatherclass):
     probabilities = tf.nn.softmax(prediction).numpy()
     predicted_class_idx = np.argmax(probabilities)
     confidence = probabilities[0][predicted_class_idx]
-
-    return JSONResponse(content={
-        "predicted_class": class_names[predicted_class_idx],
-        "confidence": f"{confidence:.2%}"
-    })
+    file.file.seek(0)
+    return  await create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=confidence)
 
 
   async def callai(
@@ -228,3 +231,75 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         result = await self.results(request, file)  # Pass request and file
         return result
+      
+
+
+async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,confidence: str) -> io.BytesIO:
+    
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents)).convert("RGB")
+    
+   
+    pdf_buffer = io.BytesIO()
+    c = canvas.Canvas(pdf_buffer, pagesize=letter)
+    width, height = letter
+
+    
+    title = "Results of Analysis"
+    c.setFont("Helvetica-Bold", 20)
+    title_width = c.stringWidth(title, "Helvetica-Bold", 20)
+    c.drawString((width - title_width) / 2, height - 50, title)
+    
+    
+    img_io = io.BytesIO()
+    image.save(img_io, format='PNG')
+    img_io.seek(0)
+    img_reader = ImageReader(img_io)
+    
+    
+    img_width = 300  
+    img_height = 300  
+    img_x = (width - img_width) / 2
+    img_y = (height - img_height) / 2 + 50  
+
+    # Draw the image
+    c.drawImage(img_reader, img_x, img_y, width=img_width, height=img_height)
+
+    # Prediction results text
+    result_text = f"Predicted Class: {predicted_class}\nAccuracy: {confidence}"
+    c.setFont("Helvetica", 14)
+    text_object = c.beginText(50, img_y - 80)
+    for line in result_text.splitlines():
+        text_object.textLine(line)
+    c.drawText(text_object)
+    
+ 
+    if predicted_class.lower() == "sick":
+        additional_msg = (
+            "\nWe are sorry to tell you that the analysis indicates a potential issue.\n"
+            "Please consult a healthcare professional for further diagnosis and do not rely solely on these results."
+        )
+        text_object = c.beginText(50, img_y - 140)
+        for line in additional_msg.splitlines():
+            text_object.textLine(line)
+        c.drawText(text_object)
+
+    # Disclaimer and support message
+    disclaimer = (
+        "This is an AI student project. Please consult a real doctor and do not rely solely on these results.\n"
+        "If you notice any mistake, please contact support.\n\n"
+        "Disclaimer: This is a student project prototype under active development. "
+        "The AI classification feature is not yet functional, and its results are not guaranteed to be accurate."
+    )
+    c.setFont("Helvetica-Oblique", 10)
+    disclaimer_text = c.beginText(50, 100)
+    for line in disclaimer.splitlines():
+        disclaimer_text.textLine(line)
+    c.drawText(disclaimer_text)
+
+    # Finalize the PDF
+    c.showPage()
+    c.save()
+    pdf_buffer.seek(0)
+    
+    return pdf_buffer
