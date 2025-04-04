@@ -195,7 +195,7 @@ class Adduser(Fatherclass):
           "Best regards,\nSCI Team",
           to=mail
       )
-  async def results(self, request: Request, file: UploadFile):
+  async def results(self, request: Request, file: UploadFile,email:EmailStr):
     # Read the uploaded file
     img = Image.open(io.BytesIO(await file.read()))
     img = img.convert("RGB")
@@ -211,7 +211,7 @@ class Adduser(Fatherclass):
     predicted_class_idx = np.argmax(probabilities)
     confidence = probabilities[0][predicted_class_idx]
     file.file.seek(0)
-    return  await create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=confidence)
+    return  await create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=confidence,email=email)
 
 
   async def callai(
@@ -230,16 +230,12 @@ class Adduser(Fatherclass):
         raise auth_exeption
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload and payload['role'] == "admin":
-        result = await self.results(request, file)  # Pass request and file
-        return StreamingResponse(
-    result,
-    media_type="application/pdf",
-    headers={"Content-Disposition": "inline; filename=result.pdf"}  # Use 'attachment' instead of 'inline' to force download
-)
+        await self.results(request, file,email)  
+        return "done"
       
 
 
-async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,confidence: str) -> io.BytesIO:
+async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,confidence: str,email:EmailStr) -> io.BytesIO:
     
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -307,4 +303,4 @@ async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,conf
     c.save()
     pdf_buffer.seek(0)
     
-    return pdf_buffer
+    return send_email_with_pdf(subject="testing mail", body="this is your scac result sci team", to=email, pdf_buffer=pdf_buffer):
