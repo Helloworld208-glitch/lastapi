@@ -10,6 +10,7 @@ from datetime import date
 from sendmail import send_email
 from typing import Annotated, Union
 from fastapi import Request
+import io
 
 class usermanagement(Adduser):
     def __init__(self, session):
