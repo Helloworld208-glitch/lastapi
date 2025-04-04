@@ -32,6 +32,7 @@ from reportlab.lib.utils import ImageReader
 from PIL import Image
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
+from sendmail import send_email_with_pdf
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
 class Adduser(Fatherclass):
