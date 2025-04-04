@@ -22,6 +22,8 @@ def send_email(subject: str, body: str, to: str):
 
 
 
+import io
+
 def send_email_with_pdf(subject: str, body: str, to: str, pdf_buffer: io.BytesIO):
     msg = EmailMessage()
     msg['Subject'] = subject
