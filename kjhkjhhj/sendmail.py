@@ -1,5 +1,7 @@
 import smtplib
 from email.message import EmailMessage
+import io
+
 
 def send_email(subject: str, body: str, to: str):
     msg = EmailMessage()
