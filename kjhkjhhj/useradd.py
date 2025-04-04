@@ -34,6 +34,7 @@ from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
 from sendmail import send_email_with_pdf
 import io
+from reportlab.lib import colors
 
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
@@ -235,9 +236,6 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         await self.results(request, file,email)  
         return "done"
-      
-
-
   async def create_pdf_from_uploadfile(file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
     contents = await file.read()
