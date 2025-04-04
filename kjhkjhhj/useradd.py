@@ -31,6 +31,7 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from PIL import Image
 from fastapi import UploadFile
+from fastapi.responses import StreamingResponse
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
 class Adduser(Fatherclass):
@@ -230,7 +231,11 @@ class Adduser(Fatherclass):
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload and payload['role'] == "admin":
         result = await self.results(request, file)  # Pass request and file
-        return result
+        return StreamingResponse(
+    result,
+    media_type="application/pdf",
+    headers={"Content-Disposition": "inline; filename=result.pdf"}  # Use 'attachment' instead of 'inline' to force download
+)
       
 
 
