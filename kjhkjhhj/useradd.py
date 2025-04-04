@@ -309,9 +309,10 @@ class Adduser(Fatherclass):
     pdf_buffer.seek(0)
 
     # Send email with PDF attachment
-    return send_email_with_pdf(
+    send_email_with_pdf(
         subject="Result Testing Mail",
         body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
         to=email,
         pdf_buffer=pdf_buffer
     )
+    return pdf_buffer
