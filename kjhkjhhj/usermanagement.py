@@ -63,4 +63,21 @@ class usermanagement(Adduser):
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Not an image file")
         return await self.callai( email=email,request=request,  file=file, authorization=authorization)
+    def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
+       
+        auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
+        if not authorization:
+          raise auth_exeption
+        if not authorization.startswith(AUTH_PREFIX):
+          raise auth_exeption
+        payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+        print(payload['role'])
+        print(payload )
+
+        if payload and payload['role']=="admin":
+          appointments= self.session.query(Userr).filter().all()
+          return appointments
+        else:
+            raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa')  
+            
 
