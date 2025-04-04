@@ -238,76 +238,82 @@ class Adduser(Fatherclass):
       
 
 
-async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,confidence: str,email:EmailStr) -> io.BytesIO:
-    
+  async def create_pdf_from_uploadfile(file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
+    # Read and process the uploaded file
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
-    
-   
+
+    # Create a PDF buffer
     pdf_buffer = io.BytesIO()
     c = canvas.Canvas(pdf_buffer, pagesize=letter)
     width, height = letter
 
-    
+    # Title section
     title = "Results of Analysis"
     c.setFont("Helvetica-Bold", 20)
     title_width = c.stringWidth(title, "Helvetica-Bold", 20)
-    c.drawString((width - title_width) / 2, height - 50, title)
-    
-    
+    c.drawString((width - title_width) / 2, height - 40, title)
+
+    # Image section (centered)
     img_io = io.BytesIO()
     image.save(img_io, format='PNG')
     img_io.seek(0)
     img_reader = ImageReader(img_io)
-    
-    
-    img_width = 300  
-    img_height = 300  
-    img_x = (width - img_width) / 2
-    img_y = (height - img_height) / 2 + 50  
 
-    # Draw the image
+    img_width = 300
+    img_height = 300
+    img_x = (width - img_width) / 2
+    img_y = height - 320  # Adjusted position to leave space for the title
+
     c.drawImage(img_reader, img_x, img_y, width=img_width, height=img_height)
 
-    # Prediction results text
-    result_text = f"Predicted Class: {predicted_class}\nAccuracy: {confidence}"
+    # Prediction result text section
+    result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence}%"
     c.setFont("Helvetica", 14)
-    text_object = c.beginText(50, img_y - 80)
+    c.setFillColor(colors.black)
+    text_object = c.beginText(50, img_y - 100)
     for line in result_text.splitlines():
         text_object.textLine(line)
     c.drawText(text_object)
-    
- 
+
+    # Additional message if predicted class is "sick"
     if predicted_class.lower() == "sick":
         additional_msg = (
-            "\nWe are sorry to tell you that the analysis indicates a potential issue.\n"
-            "Please consult a healthcare professional for further \n\n diagnosis and do not rely solely on these results."
+            "\nWe regret to inform you that the analysis suggests a potential health issue."
+            "\nPlease consult a healthcare professional for further diagnosis. Do not rely solely on these results."
         )
-        text_object = c.beginText(50, img_y - 140)
+        text_object = c.beginText(50, img_y - 160)
         for line in additional_msg.splitlines():
             text_object.textLine(line)
         c.drawText(text_object)
 
-    # Disclaimer and support message
+    # Disclaimer section
     disclaimer = (
-        "This is an AI student project. Please consult a real doctor and do not rely solely on these results.\n"
-        "If you notice any mistake, please contact support.\n\n"
-        "Disclaimer: This is a student project prototype under active development.\n\n "
-        "The AI classification feature is not yet functional, and its results are not guaranteed to be accurate.")
-    
+        "This is an AI student project. Please consult a real doctor for professional medical advice."
+        "\nThe AI classification feature is not yet fully functional, and results may not be accurate."
+        "\nFor any concerns, please contact support."
+    )
     c.setFont("Helvetica-Oblique", 10)
-    disclaimer_text = c.beginText(50, 100)
+    text_object = c.beginText(50, 120)  # Adjusted y-position for disclaimer
     for line in disclaimer.splitlines():
-        disclaimer_text.textLine(line)
-    c.drawText(disclaimer_text)
+        text_object.textLine(line)
+    c.drawText(text_object)
+
+    # SCI Team message at the bottom
     sci_team_message = "SCI Team"
     c.setFont("Helvetica-Bold", 12)
     team_message_width = c.stringWidth(sci_team_message, "Helvetica-Bold", 12)
     c.drawString((width - team_message_width) / 2, 50, sci_team_message)
 
-    # Finalize the PDF
+    # Finalize the PDF document
     c.showPage()
     c.save()
     pdf_buffer.seek(0)
-    
-    return send_email_with_pdf(subject="result testing  mail", body = "Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available should you have any questions or need further assistance.\n\nBest regards,\nSCI Team", to=email, pdf_buffer=pdf_buffer)
+
+    # Send email with PDF attachment
+    return send_email_with_pdf(
+        subject="Result Testing Mail",
+        body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
+        to=email,
+        pdf_buffer=pdf_buffer
+    )
