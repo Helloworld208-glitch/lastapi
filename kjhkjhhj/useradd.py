@@ -215,7 +215,7 @@ class Adduser(Fatherclass):
     predicted_class_idx = np.argmax(probabilities)
     confidence = probabilities[0][predicted_class_idx]
     file.file.seek(0)
-    return  await create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=round(confidence, 2),email=email)
+    return  await self.create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=round(confidence, 2),email=email)
 
 
   async def callai(
@@ -236,7 +236,7 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         await self.results(request, file,email)  
         return "done"
-  async def create_pdf_from_uploadfile(file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
+  async def create_pdf_from_uploadfile(self,file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
