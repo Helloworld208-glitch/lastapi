@@ -57,19 +57,8 @@ class usermanagement(Adduser):
     def sign_up_admin(self, user: userinlogin):
         return self.create_user_admin(user)
 
-    async def chk_pic(
-    self,
-    request: Request,  # Added request parameter
-    file: UploadFile = File(...),
-    user_id: int = Body(...),  
-    email: EmailStr = Body(...),  
-    authorization: Annotated[Union[str, None], Header()] = None):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Not an image file")
-    return await self.callai(
-        email=email,
-        request=request,  # Pass request to callai
-        file=file,
-        authorization=authorization
-    )
+    async def chk_pic(self,request: Request,  file: UploadFile = File(...),user_id: int = Body(...),  email: EmailStr = Body(...),  authorization: Annotated[Union[str, None], Header()] = None):
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Not an image file")
+        return await self.callai( email=email,request=request,  file=file, authorization=authorization)
 
