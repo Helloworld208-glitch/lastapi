@@ -293,7 +293,7 @@ async def create_pdf_from_uploadfile( file: UploadFile,predicted_class: str,conf
         "This is an AI student project. Please consult a real doctor and do not rely solely on these results.\n"
         "If you notice any mistake, please contact support.\n\n"
         "Disclaimer: This is a student project prototype under active development.\n\n "
-        "The AI classification feature is not yet functional, and its results are not guaranteed to be accurate."
+        "The AI classification feature is not yet functional, and its results are not guaranteed to be accurate.")
     
     c.setFont("Helvetica-Oblique", 10)
     disclaimer_text = c.beginText(50, 100)
