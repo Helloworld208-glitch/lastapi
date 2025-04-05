@@ -250,7 +250,7 @@ class Adduser(Fatherclass):
     title = "Results of Analysis"
     c.setFont("Helvetica-Bold", 20)
     title_width = c.stringWidth(title, "Helvetica-Bold", 20)
-    c.drawString((width - title_width) / 2, height - 40, title)
+    c.drawString((width - title_width) / 2, height - 70, title)
 
     # Image section (centered)
     img_io = io.BytesIO()
