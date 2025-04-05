@@ -9,18 +9,19 @@ from pydantic import EmailStr
 from datetime import date
 from sendmail import send_email
 from typing import Annotated, Union
-from fastapi import Request
+from fastapi import Request,BackgroundTasks, HTTPException
+
 import io
 AUTH_PREFIX='Bearer ' 
 class usermanagement(Adduser):
     def __init__(self, session):
         super().__init__(session)
         
-    def sign_up_user(self, user: Usercreate):  # Fixed type annotation
+    def sign_up_user(self, user: Usercreate, background_tasks: BackgroundTasks):  # Fixed type annotation
         if self.chk_user_email(user.email):
             raise HTTPException(status_code=400, detail="Email already in use")
         user.password = encrypt.hash_passwords(user.password)
-        self.send_welcome_email(user.firstname, user.email)
+        background_tasks.add_task(self.send_welcome_email, user.firstname, user.email)
         return self.create_user(user)
 
     def log_in(self, user: userinlogin):
