@@ -260,16 +260,16 @@ class Adduser(Fatherclass):
     # Create a PDF buffer
     pdf_buffer = io.BytesIO()
     c = canvas.Canvas(pdf_buffer, pagesize=letter)
-    width, height = letter
+    width, height = letter  # Width: 612, Height: 792 (letter size)
 
-    # Title section
+    # Title section (Top of the page)
     title = "Results of Analysis"
     c.setFont("Helvetica-Bold", 20)
     title_width = c.stringWidth(title, "Helvetica-Bold", 20)
-    title_y = height - 50  # Adjusted to leave space at the top
+    title_y = height - 50  # 50 points from the top (visible area)
     c.drawString((width - title_width) / 2, title_y, title)
 
-    # Image section (centered)
+    # Image section (centered below the title)
     img_io = io.BytesIO()
     image.save(img_io, format='PNG')
     img_io.seek(0)
@@ -278,32 +278,30 @@ class Adduser(Fatherclass):
     img_width = 300
     img_height = 300
     img_x = (width - img_width) / 2
-    img_y = title_y - 70  # Position below the title
+    img_y = title_y - 70 - img_height  # Position image 70 points below the title
     c.drawImage(img_reader, img_x, img_y, width=img_width, height=img_height)
 
-    # Prediction result text section
-    confidence = round(float(confidence), 2)  # Limit confidence to 2 decimal places
+    # Prediction result text (below the image)
+    confidence = round(float(confidence), 2)
     result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence}%"
     c.setFont("Helvetica", 14)
-    c.setFillColor(colors.black)
-    text_y = img_y - 50  # Position below the image
+    text_y = img_y - 50  # 50 points below the image
     text_object = c.beginText(50, text_y)
     for line in result_text.splitlines():
         text_object.textLine(line)
     c.drawText(text_object)
 
-    # Additional message if predicted class is "sick"
+    # Additional message if "sick" (positioned closer to the disclaimer)
     if predicted_class.lower() == "sick":
         additional_msg = (
-            "We regret to inform you that the analysis suggests a potential health issue."
-            " Please consult a healthcare professional for further diagnosis. Do not rely solely on these results."
+            "We regret to inform you that the analysis suggests a potential health issue. "
+            "Please consult a healthcare professional for further diagnosis. Do not rely solely on these results."
         )
         c.setFont("Helvetica", 12)
-        text_y -= 80  # Adjust position below the prediction result
-        text_object = c.beginText(50, text_y)
+        text_y -= 40  # Move 40 points below the prediction result
 
-        # Manually wrap the text based on the width of the page
-        max_line_width = width - 100  # Set some padding from the left and right
+        # Text wrapping logic
+        max_line_width = width - 100
         lines = []
         current_line = ""
         for word in additional_msg.split(" "):
@@ -313,47 +311,45 @@ class Adduser(Fatherclass):
             else:
                 lines.append(current_line)
                 current_line = word
-        if current_line:  # Add the last line
+        if current_line:
             lines.append(current_line)
 
-        # Add the wrapped lines to the text object
+        # Draw the wrapped text
+        text_object = c.beginText(50, text_y)
         for line in lines:
             text_object.textLine(line)
-
         c.drawText(text_object)
 
-    # Disclaimer section (in red)
-    c.setFillColorRGB(1, 0, 0)  # Red color for disclaimer
+    # Disclaimer (red text, positioned above the footer)
+    c.setFillColorRGB(1, 0, 0)
     disclaimer = (
         "This is an AI student project. Please consult a real doctor for professional medical advice."
         "\nThe AI classification feature is not yet fully functional, and results may not be accurate."
         "\nFor any concerns, please contact support."
     )
     c.setFont("Helvetica-Oblique", 10)
-    text_y -= 100  # Adjust position below the additional message
-    text_object = c.beginText(50, text_y)
+    disclaimer_y = 100  # Fixed position above the footer
+    text_object = c.beginText(50, disclaimer_y)
     for line in disclaimer.splitlines():
         text_object.textLine(line)
     c.drawText(text_object)
 
-    # Reset color to black before drawing "SCI Team"
+    # SCI Team footer (bottom of the page)
     c.setFillColor(colors.black)
-
-    # SCI Team message at the bottom
     sci_team_message = "SCI Team"
     c.setFont("Helvetica-Bold", 12)
     team_message_width = c.stringWidth(sci_team_message, "Helvetica-Bold", 12)
-    c.drawString((width - team_message_width) / 2, 50, sci_team_message)
+    c.drawString((width - team_message_width) / 2, 50, sci_team_message)  # 50 points from the bottom
 
-    # Finalize the PDF document
+    # Finalize and return the PDF
     c.showPage()
     c.save()
     pdf_buffer.seek(0)
 
     # Send email with PDF attachment
     send_email_with_pdf(
-        subject="Result Testing Mail",
-        body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
+        subject="SCI Analysis Results",
+        body="Dear User,\n\nPlease find your analysis results attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
         to=email,
         pdf_buffer=pdf_buffer
     )
