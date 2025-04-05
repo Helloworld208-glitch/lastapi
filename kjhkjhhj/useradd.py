@@ -41,6 +41,13 @@ from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 
 from reportlab.lib.utils import ImageReader
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+import io
+from PIL import Image
+from fastapi import UploadFile
+from pydantic import EmailStr
 
 
 
@@ -244,15 +251,7 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         await self.results(request, file,email)  
         return "done"
-  from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.pdfgen import canvas
-import io
-from PIL import Image
-from fastapi import UploadFile
-from pydantic import EmailStr
-
-async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
+  async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
