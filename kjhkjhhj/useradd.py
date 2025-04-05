@@ -236,7 +236,7 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         await self.results(request, file,email)  
         return "done"
-  async def create_pdf_from_uploadfile(self,file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
+  async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -266,6 +266,7 @@ class Adduser(Fatherclass):
     c.drawImage(img_reader, img_x, img_y, width=img_width, height=img_height)
 
     # Prediction result text section
+    confidence = round(float(confidence), 2)  # Limit confidence to 2 decimal places
     result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence}%"
     c.setFont("Helvetica", 14)
     c.setFillColor(colors.black)
@@ -285,7 +286,8 @@ class Adduser(Fatherclass):
             text_object.textLine(line)
         c.drawText(text_object)
 
-    # Disclaimer section
+    # Disclaimer section (in red)
+    c.setFillColorRGB(1, 0, 0)  # Red color for disclaimer
     disclaimer = (
         "This is an AI student project. Please consult a real doctor for professional medical advice."
         "\nThe AI classification feature is not yet fully functional, and results may not be accurate."
