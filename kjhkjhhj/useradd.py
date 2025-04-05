@@ -35,6 +35,12 @@ from fastapi.responses import StreamingResponse
 from sendmail import send_email_with_pdf
 import io
 from reportlab.lib import colors
+from reportlab.platypus import SimpleDocTemplate, Image
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from reportlab.platypus import ImageReader
+
 
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
