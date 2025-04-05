@@ -28,7 +28,7 @@ import keras
 import io
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from reportlab.lib.utils import ImageReader
+
 from PIL import Image
 from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
@@ -39,7 +39,7 @@ from reportlab.platypus import SimpleDocTemplate, Image
 from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
-from reportlab.platypus import ImageReader
+
 from reportlab.lib.utils import ImageReader
 
 
