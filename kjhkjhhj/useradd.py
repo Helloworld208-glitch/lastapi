@@ -40,6 +40,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from reportlab.platypus import ImageReader
+from reportlab.lib.utils import ImageReader
+
 
 
 AUTH_PREFIX='Bearer ' 
