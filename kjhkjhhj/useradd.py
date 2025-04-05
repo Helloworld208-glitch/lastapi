@@ -247,7 +247,6 @@ class Adduser(Fatherclass):
   from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
-from reportlab.platypus import ImageReader
 import io
 from PIL import Image
 from fastapi import UploadFile
