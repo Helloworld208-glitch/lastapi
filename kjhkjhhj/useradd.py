@@ -236,7 +236,16 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         await self.results(request, file,email)  
         return "done"
-  async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
+  from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.pdfgen import canvas
+from reportlab.platypus import ImageReader
+import io
+from PIL import Image
+from fastapi import UploadFile
+from pydantic import EmailStr
+
+async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
     contents = await file.read()
     image = Image.open(io.BytesIO(contents)).convert("RGB")
@@ -278,12 +287,31 @@ class Adduser(Fatherclass):
     # Additional message if predicted class is "sick"
     if predicted_class.lower() == "sick":
         additional_msg = (
-            "\nWe regret to inform you that the analysis suggests a potential health issue."
-            "\nPlease consult a healthcare professional for further diagnosis. Do not rely solely on these results."
+            "We regret to inform you that the analysis suggests a potential health issue."
+            " Please consult a healthcare professional for further diagnosis. Do not rely solely on these results."
         )
+        c.setFont("Helvetica", 12)
         text_object = c.beginText(50, img_y - 160)
-        for line in additional_msg.splitlines():
+
+        # Manually wrap the text based on the width of the page
+        max_line_width = width - 100  # Set some padding from the left and right
+        lines = []
+        current_line = ""
+        for word in additional_msg.split(" "):
+            # Test if adding the next word would exceed the max line width
+            test_line = current_line + (" " if current_line else "") + word
+            if c.stringWidth(test_line, "Helvetica", 12) <= max_line_width:
+                current_line = test_line
+            else:
+                lines.append(current_line)
+                current_line = word
+        if current_line:  # Add the last line
+            lines.append(current_line)
+
+        # Add the wrapped lines to the text object
+        for line in lines:
             text_object.textLine(line)
+
         c.drawText(text_object)
 
     # Disclaimer section (in red)
@@ -299,6 +327,9 @@ class Adduser(Fatherclass):
         text_object.textLine(line)
     c.drawText(text_object)
 
+    # Reset color to black before drawing "SCI Team"
+    c.setFillColor(colors.black)
+
     # SCI Team message at the bottom
     sci_team_message = "SCI Team"
     c.setFont("Helvetica-Bold", 12)
@@ -312,8 +343,7 @@ class Adduser(Fatherclass):
 
     # Send email with PDF attachment
     send_email_with_pdf(
-        subject="Result Testing Mail",
-        body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
+        subject="Result Testing Mail",body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
         to=email,
         pdf_buffer=pdf_buffer
     )
