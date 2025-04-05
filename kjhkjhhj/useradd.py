@@ -282,7 +282,8 @@ class Adduser(Fatherclass):
     c.drawImage(img_reader, img_x, img_y, width=img_width, height=img_height)
 
     # Prediction result text (below the image)
-    confidence = round(float(confidence), 2)
+    # FIX: Convert confidence to percentage (e.g., 0.99 → 99.00%)
+    confidence = round(float(confidence) * 100, 2)  # Multiply by 100 to convert decimal to percentage
     result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence:.2f}%"  # Force 2 decimal places
     c.setFont("Helvetica", 14)
     text_y = img_y - 50  # 50 points below the image
