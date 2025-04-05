@@ -283,13 +283,43 @@ class Adduser(Fatherclass):
 
     # Prediction result text (below the image)
     confidence = round(float(confidence), 2)
-    result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence}%"
+    result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence:.2f}%"  # Force 2 decimal places
     c.setFont("Helvetica", 14)
     text_y = img_y - 50  # 50 points below the image
     text_object = c.beginText(50, text_y)
     for line in result_text.splitlines():
         text_object.textLine(line)
     c.drawText(text_object)
+
+    # Add message for "normal" class to reduce spacing
+    if predicted_class.lower() == "normal":
+        normal_msg = (
+            "We're happy to inform you that the analysis did not detect any health issues. "
+            "Maintain regular check-ups for preventive care."
+        )
+        c.setFont("Helvetica", 12)
+        text_y -= 40  # Position below confidence text
+        text_object = c.beginText(50, text_y)
+
+        # Wrap text
+        max_line_width = width - 100
+        lines = []
+        current_line = ""
+        for word in normal_msg.split(" "):
+            test_line = current_line + (" " if current_line else "") + word
+            if c.stringWidth(test_line, "Helvetica", 12) <= max_line_width:
+                current_line = test_line
+            else:
+                lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+
+        # Draw wrapped text
+        for line in lines:
+            text_object.textLine(line)
+        c.drawText(text_object)
+        text_y -= (len(lines) * 14)  # Update position for next sections
 
     # Additional message if "sick" (positioned closer to the disclaimer)
     if predicted_class.lower() == "sick":
@@ -319,8 +349,9 @@ class Adduser(Fatherclass):
         for line in lines:
             text_object.textLine(line)
         c.drawText(text_object)
+        text_y -= (len(lines) * 14)  # Update position for next sections
 
-    # Disclaimer (red text, positioned above the footer)
+    # Disclaimer (red text, positioned dynamically)
     c.setFillColorRGB(1, 0, 0)
     disclaimer = (
         "This is an AI student project. Please consult a real doctor for professional medical advice."
@@ -328,7 +359,7 @@ class Adduser(Fatherclass):
         "\nFor any concerns, please contact support."
     )
     c.setFont("Helvetica-Oblique", 10)
-    disclaimer_y = 100  # Fixed position above the footer
+    disclaimer_y = text_y - 30  # Position below the last message
     text_object = c.beginText(50, disclaimer_y)
     for line in disclaimer.splitlines():
         text_object.textLine(line)
