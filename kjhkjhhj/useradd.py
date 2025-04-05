@@ -266,7 +266,8 @@ class Adduser(Fatherclass):
     title = "Results of Analysis"
     c.setFont("Helvetica-Bold", 20)
     title_width = c.stringWidth(title, "Helvetica-Bold", 20)
-    c.drawString((width - title_width) / 2, height - 70, title)
+    title_y = height - 50  # Adjusted to leave space at the top
+    c.drawString((width - title_width) / 2, title_y, title)
 
     # Image section (centered)
     img_io = io.BytesIO()
@@ -277,8 +278,7 @@ class Adduser(Fatherclass):
     img_width = 300
     img_height = 300
     img_x = (width - img_width) / 2
-    img_y = height - 320  # Adjusted position to leave space for the title
-
+    img_y = title_y - 70  # Position below the title
     c.drawImage(img_reader, img_x, img_y, width=img_width, height=img_height)
 
     # Prediction result text section
@@ -286,7 +286,8 @@ class Adduser(Fatherclass):
     result_text = f"Predicted Class: {predicted_class}\nConfidence: {confidence}%"
     c.setFont("Helvetica", 14)
     c.setFillColor(colors.black)
-    text_object = c.beginText(50, img_y - 100)
+    text_y = img_y - 50  # Position below the image
+    text_object = c.beginText(50, text_y)
     for line in result_text.splitlines():
         text_object.textLine(line)
     c.drawText(text_object)
@@ -298,14 +299,14 @@ class Adduser(Fatherclass):
             " Please consult a healthcare professional for further diagnosis. Do not rely solely on these results."
         )
         c.setFont("Helvetica", 12)
-        text_object = c.beginText(50, img_y - 160)
+        text_y -= 80  # Adjust position below the prediction result
+        text_object = c.beginText(50, text_y)
 
         # Manually wrap the text based on the width of the page
         max_line_width = width - 100  # Set some padding from the left and right
         lines = []
         current_line = ""
         for word in additional_msg.split(" "):
-            # Test if adding the next word would exceed the max line width
             test_line = current_line + (" " if current_line else "") + word
             if c.stringWidth(test_line, "Helvetica", 12) <= max_line_width:
                 current_line = test_line
@@ -329,7 +330,8 @@ class Adduser(Fatherclass):
         "\nFor any concerns, please contact support."
     )
     c.setFont("Helvetica-Oblique", 10)
-    text_object = c.beginText(50, 120)  # Adjusted y-position for disclaimer
+    text_y -= 100  # Adjust position below the additional message
+    text_object = c.beginText(50, text_y)
     for line in disclaimer.splitlines():
         text_object.textLine(line)
     c.drawText(text_object)
@@ -350,7 +352,8 @@ class Adduser(Fatherclass):
 
     # Send email with PDF attachment
     send_email_with_pdf(
-        subject="Result Testing Mail",body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
+        subject="Result Testing Mail",
+        body="Dear [Recipient's Name],\n\nPlease find your SCI results attached. The SCI team is available for any questions or further assistance.\n\nBest regards,\nSCI Team",
         to=email,
         pdf_buffer=pdf_buffer
     )
