@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Body, BackgroundTasks, Header, HTTPExcep
 from schema import Usercreate, userinlogin
 from datetime import date
 from database import get_db
-from usermanagement import usermanagement  # Adjust import as needed
+from usermanagement import usermanagement  
 from typing import Annotated, Union
 from fastapi import UploadFile, File, HTTPException, Body, Header, Depends
 from pydantic import EmailStr
@@ -62,11 +62,11 @@ def update_status_endpoint(appointmentId: int = Body(...),
 def signup(authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db)):
     
      return usermanagement(session).get_admin_app(authorization=authorization)
-from fastapi import Request  # Add import
+from fastapi import Request  
 
 @authentification.post("/adminuploadtouser")
 async def auth(
-    request: Request,  # Add request parameter
+    request: Request,  
     email: EmailStr = Form(...),
     file: UploadFile = File(...),
     authorization: Annotated[Union[str, None], Header()] = None,
@@ -74,14 +74,20 @@ async def auth(
 ):
     if not file.content_type.startswith("image/"):
         return {"error": "Invalid file type, only images are allowed!"}
-    # Pass request to chk_pic
+    
     result = await usermanagement(session=session).chk_pic(
-        request=request,  # Forward request
+        request=request,  
         file=file,
         email=email,
         authorization=authorization
     )
     return result
+
+
+@authentification.post("/searchmail")
+def signup(email:str,authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db)):
+    
+     return useradd(session).search_mail(email=email,authorization=authorization)
 
 
 
