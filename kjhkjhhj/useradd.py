@@ -386,10 +386,10 @@ class Adduser(Fatherclass):
     c.save()
     pdf_buffer.seek(0)
 
-    # Send email with PDF attachment
+    name=self.get_user_by_email(email).email
     send_email_with_pdf(
         subject="SCI Analysis Results",
-        body="Dear User,\n\nPlease find your analysis results attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
+        body="Dear {name},\n\nPlease find your analysis results attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
         to=email,
         pdf_buffer=pdf_buffer
     )
