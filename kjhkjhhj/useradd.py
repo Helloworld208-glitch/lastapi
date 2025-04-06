@@ -389,7 +389,7 @@ class Adduser(Fatherclass):
     name=self.get_user_by_email(email).firstname
     send_email_with_pdf(
         subject="SCI Analysis Results",
-        body="Dear {name},\n\nPlease find your analysis results attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
+        body=f"Dear {name},\n\nPlease find your analysis results attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
         to=email,
         pdf_buffer=pdf_buffer
     )
