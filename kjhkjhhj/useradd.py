@@ -232,7 +232,15 @@ class Adduser(Fatherclass):
     file.file.seek(0)
     return  await self.create_pdf_from_uploadfile(file=file,predicted_class= class_names[predicted_class_idx],confidence=round(confidence, 2),email=email)
 
-
+  def search_mail(self,email:str, authorization: Annotated[Union[str, None], Header()] = None):
+        auth_exeption = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='error')
+        if not authorization:
+          raise auth_exeption
+        if not authorization.startswith(AUTH_PREFIX):
+          raise auth_exeption
+        payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+        if payload and payload['role'] == "admin":
+           return self.session.query(Userr).filter(Userr.email.startswith(email)).limit(5).all()
   async def callai(
     self,
     email: EmailStr,
@@ -386,3 +394,4 @@ class Adduser(Fatherclass):
         pdf_buffer=pdf_buffer
     )
     return pdf_buffer
+    
