@@ -84,7 +84,7 @@ async def auth(
     return result
 
 
-@authentification.post("/searchmail")
+@authentification.get("/searchmail")
 def signup(email:str,authorization:Annotated[Union[str,None],Header()]=None, session = Depends(get_db)):
     
      return useradd(session).search_mail(email=email,authorization=authorization)
