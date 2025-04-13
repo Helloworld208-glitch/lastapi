@@ -259,6 +259,27 @@ class Adduser(Fatherclass):
     if payload and payload['role'] == "admin":
         await self.results(request, file,email)  
         return "done"
+  async def callai2(
+    self,
+    email: EmailStr,
+    request: Request,  # Add request parameter
+    file: UploadFile = File(...),
+    authorization: Annotated[Union[str, None], Header()] = None):
+    auth_exeption = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='error'
+    )
+    if not authorization:
+        raise auth_exeption
+    if not authorization.startswith(AUTH_PREFIX):
+        raise auth_exeption
+    payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+    if payload and payload['role'] == "admin":
+        return await self.results2(request, file,email)  
+         
+
+
+  
   from reportlab.lib.pagesizes import letter
   async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
@@ -394,6 +415,24 @@ class Adduser(Fatherclass):
         pdf_buffer=pdf_buffer
     )
     return pdf_buffer
+
+  async def results2(self, request: Request, file: UploadFile,email:EmailStr):
+    # Read the uploaded file
+    img = Image.open(io.BytesIO(await file.read()))
+    img = img.convert("RGB")
+    img = img.resize((224, 224))
+    img_array = np.array(img)
+
+    # Access the model from the application state
+    model = request.app.state.model
+
+    # Make a prediction
+    prediction = model.predict(np.expand_dims(img_array, axis=0))
+    probabilities = tf.nn.softmax(prediction).numpy()
+    predicted_class_idx = np.argmax(probabilities)
+    confidence = probabilities[0][predicted_class_idx]
+    file.file.seek(0)
+    return  await self.create_pdf_from(file=file,predicted_class= class_names[predicted_class_idx],confidence=round(confidence, 2),email=email)
   async def create_pdf_from(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
       # Read and process the uploaded file
       contents = await file.read()
