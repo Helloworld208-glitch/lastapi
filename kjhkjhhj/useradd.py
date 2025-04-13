@@ -242,6 +242,33 @@ class Adduser(Fatherclass):
         payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
         if payload and payload['role'] == "admin":
            return self.session.query(Userr).filter(Userr.email.startswith(email)).limit(5).all()
+
+
+
+
+  async def dontcallai(
+    self,
+    email: EmailStr,
+    request: Request, 
+    file: UploadFile = File(...),
+    authorization: Annotated[Union[str, None], Header()] = None):
+    auth_exeption = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='error'
+    )
+    if not authorization:
+        raise auth_exeption
+    if not authorization.startswith(AUTH_PREFIX):
+        raise auth_exeption
+    payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+    if payload and payload['role'] == "admin":
+        await self.send_email_with_pdf(
+        subject="SCI Analysis Results",
+        body=f"Dear {name},\n\nPlease find your analysis  attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
+        to=email,
+        pdf_buffer=file.file
+    ) 
+        return "done"
   async def callai(
     self,
     email: EmailStr,
