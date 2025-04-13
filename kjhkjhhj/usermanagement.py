@@ -69,7 +69,7 @@ class usermanagement(Adduser):
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Not an image file")
         return await self.callai2( email=email,request=request,  file=file, authorization=authorization)
-    def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
+    *
 
 
 
