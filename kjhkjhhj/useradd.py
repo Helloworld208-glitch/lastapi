@@ -18,6 +18,7 @@ from pydantic import EmailStr
 import numpy as np
 import tensorflow as tf
 from PIL import Image
+from fastapi.responses import Response
 import io
 from fastapi import UploadFile, File, Request
 from PIL import Image
@@ -558,7 +559,8 @@ class Adduser(Fatherclass):
       c.showPage()
       c.save()
       pdf_buffer.seek(0)
-
+      pdf_content = pdf_buffer.getvalue()
+  
       return Response(
         content=pdf_bytes,
         media_type="application/pdf",
