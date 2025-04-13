@@ -262,7 +262,7 @@ class Adduser(Fatherclass):
         raise auth_exeption
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload and payload['role'] == "admin":
-        await self.send_email_with_pdf(
+        await send_email_with_pdf(
         subject="SCI Analysis Results",
         body=f"Dear {name},\n\nPlease find your analysis  attached. Contact us for further assistance.\n\nBest regards,\nSCI Team",
         to=email,
