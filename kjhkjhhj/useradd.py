@@ -274,7 +274,7 @@ class Adduser(Fatherclass):
     if not authorization.startswith(AUTH_PREFIX):
         raise auth_exeption
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
-    if payload and payload['role'] == "admin":
+    if payload:
         return await self.results2(request, file,email)  
          
 
