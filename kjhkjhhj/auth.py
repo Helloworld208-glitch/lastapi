@@ -111,5 +111,25 @@ async def auth(
     return result
 
 
+@authentification.post("/adminuploadtouser3")
+async def auth(
+    request: Request,  
+    email: EmailStr = Form(...),
+    file: UploadFile = File(...),
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session=Depends(get_db)
+):
+    if not file.content_type.startswith("image/"):
+        return {"error": "Invalid file type, only images are allowed!"}
+    
+    result = await usermanagement(session=session).chk_pic3(
+        request=request,  
+        file=file,
+        email=email,
+        authorization=authorization
+    )
+    return result
+
+
 
 
