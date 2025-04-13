@@ -562,7 +562,7 @@ class Adduser(Fatherclass):
       pdf_content = pdf_buffer.getvalue()
   
       return Response(
-        content=pdf_bytes,
+        content=pdf_content,
         media_type="application/pdf",
         headers={"Content-Disposition": "inline; filename=example.pdf"})
     
