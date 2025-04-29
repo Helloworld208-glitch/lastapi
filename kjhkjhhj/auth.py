@@ -130,6 +130,73 @@ async def auth(
     )
     return result
 
+@app.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    email: str,
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session: Session = Depends(get_db),
+):
+    # 1) Auth
+    auth_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="u cant"
+    )
+    if not authorization or not authorization.startswith(AUTH_PREFIX):
+        raise auth_exception
+
+    token = authorization[len(AUTH_PREFIX):]
+    payload = jwtclass.chk_token(token=token)
+    if not payload or "user_id" not in payload:
+        raise auth_exception
+
+    my_id = payload["user_id"]
+    other_id = 44
+
+    # 2) Accept socket
+    await websocket.accept()
+    active_connections[my_id] = websocket
+    await websocket.send_text("Connected successfully!")
+
+    # 3) Load history via injected `session`
+    history = (
+        session.query(ChatMessage)
+        .filter(
+            or_(
+                and_(ChatMessage.from_id == my_id,   ChatMessage.to_id == other_id),
+                and_(ChatMessage.from_id == other_id, ChatMessage.to_id == my_id),
+            )
+        )
+        .order_by(ChatMessage.timestamp)
+        .all()
+    )
+    for msg in history:
+        prefix = "You" if msg.from_id == my_id else f"User #{msg.from_id}"
+        await websocket.send_text(f"{prefix}: {msg.message}")
+
+    # 4) Message loop
+    try:
+        while True:
+            data = await websocket.receive_text()
+            # save
+            new_msg = ChatMessage(from_id=my_id, to_id=other_id, message=data)
+            session.add(new_msg)
+            session.commit()
+
+            # echo back
+            await websocket.send_text(f"You: {data}")
+            # forward
+            if other_id in active_connections:
+                try:
+                    await active_connections[other_id].send_text(f"User #{my_id}: {data}")
+                except:
+                    pass
+
+    except WebSocketDisconnect:
+        active_connections.pop(my_id, None)
+    except Exception as e:
+        await websocket.send_text(f"Error: {e}")
+        active_connections.pop(my_id, None)
+
 
 
 
