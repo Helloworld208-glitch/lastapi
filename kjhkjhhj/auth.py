@@ -7,6 +7,15 @@ from typing import Annotated, Union
 from fastapi import UploadFile, File, HTTPException, Body, Header, Depends
 from pydantic import EmailStr
 from fastapi import Form
+from fastapi import (
+    APIRouter, Depends, Header, HTTPException, status,
+    WebSocket, WebSocketDisconnect
+)
+from typing import Annotated, Union, Dict, Any
+from sqlalchemy.orm import Session
+from sqlalchemy import or_, and_, distinct
+import json
+
 authentification = APIRouter()
 
 @authentification.post("/login")
