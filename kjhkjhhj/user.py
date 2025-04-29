@@ -33,4 +33,19 @@ class Admin(Base):
     
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("User.id"), nullable=False, unique=True)
-    role = Column(String(50), default="admin")   
+    role = Column(String(50), default="admin")  
+
+
+
+
+
+
+
+class ChatMessage(Base):
+    __tablename__ = "simple_chat_messages"  # New table name
+    
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    from_id = Column(Integer, index=True)
+    to_id = Column(Integer, index=True)
+    message = Column(String)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())
