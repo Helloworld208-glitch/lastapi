@@ -1,6 +1,8 @@
 from  database import Base
 from sqlalchemy import Column, Integer ,String
 
+from sqlalchemy import DateTime
+from sqlalchemy.sql import func
 
 
 class Userr(Base):
