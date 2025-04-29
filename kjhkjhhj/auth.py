@@ -130,7 +130,7 @@ async def auth(
     )
     return result
 
-@app.websocket("/ws")
+@authentification.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
     email: str,
