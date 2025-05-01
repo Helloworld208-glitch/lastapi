@@ -280,5 +280,37 @@ def get_chat_users(
     ).all()
 
     all_users = {uid for (uid,) in from_users + to_users if uid != ADMIN_ID}
+
+
+    # Add this endpoint after the /chat-users endpoint
+@authentification.get("/chat-history/{user_id}")
+def get_chat_history(
+    user_id: int,
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session: Session = Depends(get_db)
+):
+    # Authentication check
+    if not authorization or not authorization.startswith(AUTH_PREFIX):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    
+    token = authorization[len(AUTH_PREFIX):]
+    payload = jwtclass.chk_token(token)
+    
+    if not payload or payload.get('user_id') != ADMIN_ID or payload.get('role') != 'admin':
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    # Get chat history between admin and selected user
+    messages = session.query(ChatMessage).filter(
+        or_(
+            and_(ChatMessage.from_id == user_id, ChatMessage.to_id == ADMIN_ID),
+            and_(ChatMessage.from_id == ADMIN_ID, ChatMessage.to_id == user_id)
+        )
+    ).order_by(ChatMessage.timestamp.asc()).all()
+
+    return [{
+        "from_id": msg.from_id,
+        "message": msg.message,
+        "timestamp": msg.timestamp.isoformat()
+    } for msg in messages]
     
     return list(all_users)
