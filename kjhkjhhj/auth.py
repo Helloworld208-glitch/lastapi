@@ -3,12 +3,12 @@ from schema import Usercreate, userinlogin
 from datetime import date
 from database import get_db
 from usermanagement import usermanagement  
-from typing import Annotated, Union, Dict
+from typing import Annotated, Union, Dict, List
 from fastapi import UploadFile, File, Form, Request
 from pydantic import EmailStr
 from security.jwt import jwtclass
 from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, distinct
 import json
 from user import ChatMessage
 
@@ -17,7 +17,10 @@ AUTH_PREFIX = "Bearer "
 authentification = APIRouter()
 active_connections: Dict[int, WebSocket] = {}
 
-# Existing endpoints (keep exactly as you provided)
+# --------------------------
+# EXISTING ENDPOINTS (UNCHANGED)
+# --------------------------
+
 @authentification.post("/login")
 def login_user(userinlogin: userinlogin, session=Depends(get_db)):
     return usermanagement(session).log_in(userinlogin)
@@ -108,7 +111,7 @@ async def admin_upload2(
     email: EmailStr = Form(...),
     file: UploadFile = File(...),
     authorization: Annotated[Union[str, None], Header()] = None,
-    session=Depends(get_db)
+    session=Depends(get_db
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type")
@@ -126,7 +129,10 @@ async def admin_upload3(
         raise HTTPException(status_code=400, detail="Invalid file type")
     return await usermanagement(session).chk_pic3(request, file, email, authorization)
 
-# WebSocket endpoints
+# --------------------------
+# WEBSOCKET ENDPOINTS (UNCHANGED)
+# --------------------------
+
 @authentification.websocket("/ws")
 async def user_websocket(
     websocket: WebSocket,
@@ -148,7 +154,6 @@ async def user_websocket(
     await websocket.accept()
     active_connections[user_id] = websocket
 
-    # Notify admin
     if ADMIN_ID in active_connections:
         await active_connections[ADMIN_ID].send_json({
             "type": "user_connected",
@@ -156,7 +161,6 @@ async def user_websocket(
         })
 
     try:
-        # Send chat history
         msgs = (
             session.query(ChatMessage)
             .filter(
@@ -175,7 +179,6 @@ async def user_websocket(
         } for m in msgs]
         await websocket.send_json({"type": "history", "messages": history})
 
-        # Message loop
         while True:
             data = await websocket.receive_text()
             message = json.loads(data).get("message", "").strip()
@@ -189,7 +192,6 @@ async def user_websocket(
                 session.add(new_msg)
                 session.commit()
                 
-                # Forward to admin
                 if ADMIN_ID in active_connections:
                     await active_connections[ADMIN_ID].send_json({
                         "from_id": user_id,
@@ -201,7 +203,6 @@ async def user_websocket(
         pass
     finally:
         active_connections.pop(user_id, None)
-        # Notify admin
         if ADMIN_ID in active_connections:
             await active_connections[ADMIN_ID].send_json({
                 "type": "user_disconnected",
@@ -229,7 +230,6 @@ async def admin_websocket(
     active_connections[ADMIN_ID] = websocket
 
     try:
-        # Send connected users list
         users = [uid for uid in active_connections if uid != ADMIN_ID]
         await websocket.send_json({"type": "user_list", "users": users})
 
@@ -241,7 +241,6 @@ async def admin_websocket(
             message = msg_data.get("message", "").strip()
             
             if target_user and message:
-                # Save message
                 new_msg = ChatMessage(
                     from_id=ADMIN_ID,
                     to_id=target_user,
@@ -250,7 +249,6 @@ async def admin_websocket(
                 session.add(new_msg)
                 session.commit()
                 
-                # Forward to user
                 if target_user in active_connections:
                     await active_connections[target_user].send_json({
                         "from_id": ADMIN_ID,
@@ -262,3 +260,33 @@ async def admin_websocket(
         pass
     finally:
         active_connections.pop(ADMIN_ID, None)
+
+# --------------------------
+# NEW ENDPOINT FOR OFFLINE USERS
+# --------------------------
+
+@authentification.get("/chat-users", response_model=List[int])
+def get_chat_users(
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session: Session = Depends(get_db)
+):
+    if not authorization or not authorization.startswith(AUTH_PREFIX):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+    
+    token = authorization[len(AUTH_PREFIX):]
+    payload = jwtclass.chk_token(token)
+    
+    if not payload or payload.get('user_id') != ADMIN_ID or payload.get('role') != 'admin':
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
+
+    from_users = session.query(distinct(ChatMessage.from_id)).filter(
+        ChatMessage.to_id == ADMIN_ID
+    ).all()
+    
+    to_users = session.query(distinct(ChatMessage.to_id)).filter(
+        ChatMessage.from_id == ADMIN_ID
+    ).all()
+
+    all_users = {uid for (uid,) in from_users + to_users if uid != ADMIN_ID}
+    
+    return list(all_users)
