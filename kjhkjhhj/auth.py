@@ -15,7 +15,8 @@ from typing import Annotated, Union, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_, distinct
 import json
-
+ADMIN_ID = 44
+AUTH_PREFIX = "Bearer "
 authentification = APIRouter()
 
 @authentification.post("/login")
@@ -139,72 +140,77 @@ async def auth(
     )
     return result
 
-@authentification.websocket("/ws")
+@app.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    email: str,
-    authorization: Annotated[Union[str, None], Header()] = None,
+    authorization: Union[str, None] = Header(None),
     session: Session = Depends(get_db),
 ):
     # 1) Auth
     auth_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="u cant"
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Unauthorized"
     )
     if not authorization or not authorization.startswith(AUTH_PREFIX):
         raise auth_exception
 
     token = authorization[len(AUTH_PREFIX):]
-    payload = jwtclass.chk_token(token=token)
+    payload = chk_token(token=token)
     if not payload or "user_id" not in payload:
         raise auth_exception
 
     my_id = payload["user_id"]
-    other_id = 44
+    other_id = ADMIN_ID  # The admin ID is hardcoded here
 
-    # 2) Accept socket
     await websocket.accept()
     active_connections[my_id] = websocket
-    await websocket.send_text("Connected successfully!")
 
-    # 3) Load history via injected `session`
-    history = (
-        session.query(ChatMessage)
-        .filter(
-            or_(
-                and_(ChatMessage.from_id == my_id,   ChatMessage.to_id == other_id),
-                and_(ChatMessage.from_id == other_id, ChatMessage.to_id == my_id),
-            )
-        )
-        .order_by(ChatMessage.timestamp)
-        .all()
-    )
-    for msg in history:
-        prefix = "You" if msg.from_id == my_id else f"User #{msg.from_id}"
-        await websocket.send_text(f"{prefix}: {msg.message}")
-
-    # 4) Message loop
     try:
-        while True:
-            data = await websocket.receive_text()
-            # save
-            new_msg = ChatMessage(from_id=my_id, to_id=other_id, message=data)
-            session.add(new_msg)
-            session.commit()
+        # Send chat history to the user
+        messages = session.query(ChatMessage).filter(
+            or_(
+                and_(ChatMessage.from_id == my_id, ChatMessage.to_id == other_id),
+                and_(ChatMessage.from_id == other_id, ChatMessage.to_id == my_id)
+            )
+        ).order_by(ChatMessage.timestamp.asc()).all()
 
-            # echo back
-            await websocket.send_text(f"You: {data}")
-            # forward
-            if other_id in active_connections:
-                try:
-                    await active_connections[other_id].send_text(f"User #{my_id}: {data}")
-                except:
-                    pass
+        history_payload = [{
+            "from_id": msg.from_id,
+            "message": msg.message,
+            "timestamp": msg.timestamp.isoformat()
+        } for msg in messages]
+
+        await send_to_websocket(websocket, {"type": "history", "messages": history_payload})
+
+        # Notify admin that the user is connected
+        await notify_admin({"type": "user_connected", "user_id": my_id})
+
+        # Handle incoming messages
+        while True:
+            data_string = await websocket.receive_text()
+            data = json.loads(data_string)
+
+            message_text = data.get("message", "").strip()
+            if message_text:
+                new_msg = ChatMessage(from_id=my_id, to_id=other_id, message=message_text)
+                session.add(new_msg)
+                session.commit()
+                session.refresh(new_msg)
+
+                # Notify admin of the message
+                if other_id in active_connections:
+                    await send_to_websocket(active_connections[other_id], {
+                        "from_id": my_id,
+                        "message": message_text,
+                        "timestamp": new_msg.timestamp.isoformat()
+                    })
 
     except WebSocketDisconnect:
+        pass
+
+    finally:
+        # Cleanup on disconnect
         active_connections.pop(my_id, None)
-    except Exception as e:
-        await websocket.send_text(f"Error: {e}")
-        active_connections.pop(my_id, None)
+        await notify_admin({"type": "user_disconnected", "user_id": my_id})
 
 
 
