@@ -6,7 +6,7 @@ from usermanagement import usermanagement
 from typing import Annotated, Union, Dict
 from fastapi import UploadFile, File, Form, Request
 from pydantic import EmailStr
-from security.jwt import jwtclass,chk_token
+from security.jwt import jwtclass
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 import json
