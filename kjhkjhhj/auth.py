@@ -6,7 +6,7 @@ from usermanagement import usermanagement
 from typing import Annotated, Union, Dict
 from fastapi import UploadFile, File, Form, Request
 from pydantic import EmailStr
-from security.jwt import chk_token
+from security.jwt import jwtclass
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 import json
@@ -139,7 +139,8 @@ async def websocket_endpoint(
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
     token = authorization[len(AUTH_PREFIX):]
-    payload = chk_token(token)
+    # استخدم jwtclass للتحقق من التوكن
+    payload = jwtclass().decode(token)
     if not payload or "user_id" not in payload:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
@@ -186,7 +187,6 @@ async def websocket_endpoint(
         pass
     finally:
         active_connections.pop(my_id, None)
-
 
 
 
