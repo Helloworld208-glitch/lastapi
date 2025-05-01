@@ -11,32 +11,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, and_
 import json
 from user import ChatMessage
-from fastapi import APIRouter, Depends, Body, BackgroundTasks, Header, HTTPException, status
-from schema import Usercreate, userinlogin
-from datetime import date
-from database import get_db
-from usermanagement import usermanagement  
-from typing import Annotated, Union
-from fastapi import UploadFile, File, HTTPException, Body, Header, Depends
-from pydantic import EmailStr
-from fastapi import Form
-from security.jwt import  jwtclass
-from fastapi import (
-    APIRouter, Depends, Header, HTTPException, status,
-    WebSocket, WebSocketDisconnect
-)
-from typing import Annotated, Union, Dict, Any
-from sqlalchemy.orm import Session
-from sqlalchemy import or_, and_, distinct
-import json
-from user import ChatMessage
 
 ADMIN_ID = 44
 AUTH_PREFIX = "Bearer "
 authentification = APIRouter()
-# سجّل اتصالات الـ WebSocket للمستخدمين والأدمن
 active_connections: Dict[int, WebSocket] = {}
 
+# Existing endpoints (keep exactly as you provided)
 @authentification.post("/login")
 def login_user(userinlogin: userinlogin, session=Depends(get_db)):
     return usermanagement(session).log_in(userinlogin)
@@ -101,7 +82,6 @@ def get_admin_patients(
 ):
     return usermanagement(session).get_admin_app(authorization=authorization)
 
-# رفع صور للمستخدم من قبل الأدمن
 @authentification.post("/adminuploadtouser")
 async def admin_upload(
     request: Request,
@@ -146,66 +126,139 @@ async def admin_upload3(
         raise HTTPException(status_code=400, detail="Invalid file type")
     return await usermanagement(session).chk_pic3(request, file, email, authorization)
 
-# نقطة نهاية WebSocket للمستخدمين
+# WebSocket endpoints
 @authentification.websocket("/ws")
-async def websocket_endpoint(
+async def user_websocket(
     websocket: WebSocket,
     authorization: Annotated[Union[str, None], Query()] = None,
     session: Session = Depends(get_db),
 ):
-    # مصادقة
     if not authorization or not authorization.startswith(AUTH_PREFIX):
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
+    
     token = authorization[len(AUTH_PREFIX):]
-    # استخدم jwtclass للتحقق من التوكن
-    payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+    payload = jwtclass.chk_token(token)
+    
     if not payload or "user_id" not in payload:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
 
-    my_id = payload["user_id"]
-    other_id = ADMIN_ID
-
+    user_id = payload["user_id"]
     await websocket.accept()
-    active_connections[my_id] = websocket
+    active_connections[user_id] = websocket
+
+    # Notify admin
+    if ADMIN_ID in active_connections:
+        await active_connections[ADMIN_ID].send_json({
+            "type": "user_connected",
+            "user_id": user_id
+        })
 
     try:
-        # إرسال التاريخ
+        # Send chat history
         msgs = (
             session.query(ChatMessage)
             .filter(
                 or_(
-                    and_(ChatMessage.from_id == my_id, ChatMessage.to_id == other_id),
-                    and_(ChatMessage.from_id == other_id, ChatMessage.to_id == my_id)
+                    and_(ChatMessage.from_id == user_id, ChatMessage.to_id == ADMIN_ID),
+                    and_(ChatMessage.from_id == ADMIN_ID, ChatMessage.to_id == user_id)
                 )
             )
             .order_by(ChatMessage.timestamp.asc())
             .all()
         )
-        history = [{"from_id": m.from_id, "message": m.message, "timestamp": m.timestamp.isoformat()} for m in msgs]
+        history = [{
+            "from_id": m.from_id,
+            "message": m.message,
+            "timestamp": m.timestamp.isoformat()
+        } for m in msgs]
         await websocket.send_json({"type": "history", "messages": history})
 
+        # Message loop
         while True:
             data = await websocket.receive_text()
-            obj = json.loads(data)
-            text = obj.get("message", "").strip()
-            if text:
-                new_msg = ChatMessage(from_id=my_id, to_id=other_id, message=text)
+            message = json.loads(data).get("message", "").strip()
+            
+            if message:
+                new_msg = ChatMessage(
+                    from_id=user_id,
+                    to_id=ADMIN_ID,
+                    message=message
+                )
                 session.add(new_msg)
                 session.commit()
-                session.refresh(new_msg)
-                # إرسال للأدمن
-                if other_id in active_connections:
-                    await active_connections[other_id].send_json({
-                        "from_id": my_id,
-                        "message": text,
+                
+                # Forward to admin
+                if ADMIN_ID in active_connections:
+                    await active_connections[ADMIN_ID].send_json({
+                        "from_id": user_id,
+                        "message": message,
                         "timestamp": new_msg.timestamp.isoformat()
                     })
+
     except WebSocketDisconnect:
         pass
     finally:
-        active_connections.pop(my_id, None)
+        active_connections.pop(user_id, None)
+        # Notify admin
+        if ADMIN_ID in active_connections:
+            await active_connections[ADMIN_ID].send_json({
+                "type": "user_disconnected",
+                "user_id": user_id
+            })
 
+@authentification.websocket("/admin_ws")
+async def admin_websocket(
+    websocket: WebSocket,
+    authorization: Annotated[Union[str, None], Query()] = None,
+    session: Session = Depends(get_db),
+):
+    if not authorization or not authorization.startswith(AUTH_PREFIX):
+        await websocket.close()
+        return
+    
+    token = authorization[len(AUTH_PREFIX):]
+    payload = jwtclass.chk_token(token)
+    
+    if not payload or payload.get('user_id') != ADMIN_ID or payload.get('role') != 'admin':
+        await websocket.close()
+        return
 
+    await websocket.accept()
+    active_connections[ADMIN_ID] = websocket
 
+    try:
+        # Send connected users list
+        users = [uid for uid in active_connections if uid != ADMIN_ID]
+        await websocket.send_json({"type": "user_list", "users": users})
+
+        while True:
+            data = await websocket.receive_text()
+            msg_data = json.loads(data)
+            
+            target_user = msg_data.get("user_id")
+            message = msg_data.get("message", "").strip()
+            
+            if target_user and message:
+                # Save message
+                new_msg = ChatMessage(
+                    from_id=ADMIN_ID,
+                    to_id=target_user,
+                    message=message
+                )
+                session.add(new_msg)
+                session.commit()
+                
+                # Forward to user
+                if target_user in active_connections:
+                    await active_connections[target_user].send_json({
+                        "from_id": ADMIN_ID,
+                        "message": message,
+                        "timestamp": new_msg.timestamp.isoformat()
+                    })
+
+    except WebSocketDisconnect:
+        pass
+    finally:
+        active_connections.pop(ADMIN_ID, None)
