@@ -17,10 +17,7 @@ AUTH_PREFIX = "Bearer "
 authentification = APIRouter()
 active_connections: Dict[int, WebSocket] = {}
 
-# --------------------------
-# EXISTING ENDPOINTS (UNCHANGED)
-# --------------------------
-
+# Existing endpoints
 @authentification.post("/login")
 def login_user(userinlogin: userinlogin, session=Depends(get_db)):
     return usermanagement(session).log_in(userinlogin)
@@ -91,7 +88,7 @@ async def admin_upload(
     email: EmailStr = Form(...),
     file: UploadFile = File(...),
     authorization: Annotated[Union[str, None], Header()] = None,
-    session=Depends(get_db)
+    session: Session = Depends(get_db)
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type")
@@ -105,13 +102,14 @@ def search_mail(
 ):
     return usermanagement(session).search_mail(email=email, authorization=authorization)
 
+# Fixed adminuploadtouser2 endpoint
 @authentification.post("/adminuploadtouser2")
 async def admin_upload2(
     request: Request,
     email: EmailStr = Form(...),
     file: UploadFile = File(...),
     authorization: Annotated[Union[str, None], Header()] = None,
-    session=Depends(get_db
+    session: Session = Depends(get_db)  # Fixed line
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type")
@@ -123,16 +121,13 @@ async def admin_upload3(
     email: EmailStr = Form(...),
     file: UploadFile = File(...),
     authorization: Annotated[Union[str, None], Header()] = None,
-    session=Depends(get_db)
+    session: Session = Depends(get_db)
 ):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Invalid file type")
     return await usermanagement(session).chk_pic3(request, file, email, authorization)
 
-# --------------------------
-# WEBSOCKET ENDPOINTS (UNCHANGED)
-# --------------------------
-
+# WebSocket endpoints
 @authentification.websocket("/ws")
 async def user_websocket(
     websocket: WebSocket,
@@ -261,10 +256,7 @@ async def admin_websocket(
     finally:
         active_connections.pop(ADMIN_ID, None)
 
-# --------------------------
-# NEW ENDPOINT FOR OFFLINE USERS
-# --------------------------
-
+# New endpoint for chat users
 @authentification.get("/chat-users", response_model=List[int])
 def get_chat_users(
     authorization: Annotated[Union[str, None], Header()] = None,
