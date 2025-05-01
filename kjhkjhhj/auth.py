@@ -159,7 +159,7 @@ async def websocket_endpoint(
         return
     token = authorization[len(AUTH_PREFIX):]
     # استخدم jwtclass للتحقق من التوكن
-    payload = chk_token(token=token)
+    payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if not payload or "user_id" not in payload:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
         return
