@@ -7,6 +7,7 @@ from typing import Annotated, Union
 from fastapi import UploadFile, File, HTTPException, Body, Header, Depends
 from pydantic import EmailStr
 from fastapi import Form
+from security.jwt import  jwtclass
 from fastapi import (
     APIRouter, Depends, Header, HTTPException, status,
     WebSocket, WebSocketDisconnect
