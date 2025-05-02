@@ -271,16 +271,15 @@ def get_chat_users(
     if not payload or payload.get('user_id') != ADMIN_ID or payload.get('role') != 'admin':
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-    from_users = session.query(distinct(ChatMessage.from_id)).filter(
-        ChatMessage.to_id == ADMIN_ID
-    ).all()
-    
-    to_users = session.query(distinct(ChatMessage.to_id)).filter(
-        ChatMessage.from_id == ADMIN_ID
-    ).all()
+    from_users = session.query(distinct(ChatMessage.from_id))\
+                        .filter(ChatMessage.to_id == ADMIN_ID)\
+                        .all()
+    to_users   = session.query(distinct(ChatMessage.to_id))\
+                        .filter(ChatMessage.from_id == ADMIN_ID)\
+                        .all()
 
     all_users = {uid for (uid,) in from_users + to_users if uid != ADMIN_ID}
-
+    return list(all_users)
 
     # Add this endpoint after the /chat-users endpoint
 @authentification.get("/chat-history/{user_id}")
