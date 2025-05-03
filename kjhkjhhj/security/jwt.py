@@ -7,7 +7,7 @@ JWT_ALGO = config("JWT_ALGO")
 class jwtclass:
     @staticmethod
     def jwt_gen(user_id:int)->str:
-        payload ={ "user_id":user_id , "exp":time.time()+90000000000000000000000000 }
+        payload ={ "user_id":user_id , "exp":time.time()+2592000 }
 
 
         return jwt.encode(payload,JWT_SECRET,algorithm=JWT_ALGO)
