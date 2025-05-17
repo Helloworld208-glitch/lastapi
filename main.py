@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from pydantic import EmailStr
 from typing import Union, Annotated
-from contextlib import asynccontextmanager
 from init_db import createtables
 from auth import authentification
 from database import get_db
@@ -17,11 +16,12 @@ import io
 from PIL import Image
 import numpy as np
 import os
+
 class_names = ['Normal', 'sick']
 class_names2 = ['Lung_Opacity', 'Normal', 'Pneumonia_Merged']
 templates = Jinja2Templates(directory="templates")
 
-@asynccontextmanager
+
 async def lifespan(app: FastAPI):
     # Startup code
     createtables()
@@ -47,10 +47,8 @@ async def lifespan(app: FastAPI):
     model2 = tf.keras.models.load_model(output2)
     app.state.model2 = model2
     print("Model 2 loaded successfully.")
-    
+
     yield
-    
-    # Shutdown code (if needed)
     print("Shutting down...")
 
 
@@ -77,4 +75,5 @@ if __name__ == "__main__":
     import uvicorn
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
