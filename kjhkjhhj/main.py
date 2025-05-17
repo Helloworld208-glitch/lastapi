@@ -18,7 +18,7 @@ import numpy as np
 import os
 
 class_names = ['Normal', 'sick']
-class_names2 = ['Lung_Opacity', 'Normal', 'Pneumonia_Merged']
+class_names2 = ['Pneumonia_Merged', 'Normal', 'Lung_Opacity']
 templates = Jinja2Templates(directory="templates")
 
 
