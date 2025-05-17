@@ -257,6 +257,17 @@ async def admin_websocket(
         active_connections.pop(ADMIN_ID, None)
 
 # New endpoint for chat users
+@authentification.post("/adminuploadtouser22")
+async def admin_upload2(
+    request: Request,
+    email: EmailStr = Form(...),
+    file: UploadFile = File(...),
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session: Session = Depends(get_db)  # Fixed line
+):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    return await usermanagement(session).chk_pic22(request, file, email, authorization)
 @authentification.get("/chat-users", response_model=List[int])
 def get_chat_users(
     authorization: Annotated[Union[str, None], Header()] = None,
