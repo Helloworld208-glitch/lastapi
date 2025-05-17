@@ -44,8 +44,7 @@ async def lifespan(app: FastAPI):
     gdown.download(url2, output2, quiet=False, fuzzy=True)
     if not os.path.exists(output2):
         raise RuntimeError("Failed to download model 2.")
-    model2 = tf.keras.models.load_model(output2)
-    app.state.model2 = model2
+    app.state.model2 = tf.keras.models.load_model(output2)
     print("Model 2 loaded successfully.")
 
     yield
