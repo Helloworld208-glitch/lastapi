@@ -306,28 +306,6 @@ class Adduser(Fatherclass):
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload:
         return await self.results2(request, file,email)  
-         
-
-
-  
-  async def callai2(
-    self,
-    email: EmailStr,
-    request: Request,  # Add request parameter
-    file: UploadFile = File(...),
-    authorization: Annotated[Union[str, None], Header()] = None):
-    auth_exeption = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail='error'
-    )
-    if not authorization:
-        raise auth_exeption
-    if not authorization.startswith(AUTH_PREFIX):
-        raise auth_exeption
-    payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
-    if payload:
-        return await self.results2(request, file,email)
- 
   async def callai22(
     self,
     email: EmailStr,
