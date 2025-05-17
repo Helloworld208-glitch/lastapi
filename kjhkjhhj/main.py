@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.staticfiles import StaticFiles
 from pydantic import EmailStr
 from typing import Union, Annotated
-from contextlib import asynccontextmanager
 from init_db import createtables
 from auth import authentification
 from database import get_db
@@ -17,30 +16,40 @@ import io
 from PIL import Image
 import numpy as np
 import os
-import keras
+
 class_names = ['Normal', 'sick']
+class_names2 = ['Lung_Opacity', 'Normal', 'Pneumonia_Merged']
 templates = Jinja2Templates(directory="templates")
 
-@asynccontextmanager
+
 async def lifespan(app: FastAPI):
     # Startup code
     createtables()
     
-    # Download and load model
+    # Download and load model 1 (binary)
     file_id = "1-B3xH3-3xvC06WDfZdlpwvd3frUbVDBg"
     url = f"https://drive.google.com/uc?id={file_id}&confirm=t"
     output = "lasttry_model_new.h5"
-    gdown.download(url, output, quiet=False, fuzzy=True)  # Add fuzzy flag to handle confirmation
+    gdown.download(url, output, quiet=False, fuzzy=True)
     if not os.path.exists(output):
         raise RuntimeError("Failed to download the model.")
     model = tf.keras.models.load_model(output)
-    app.state.model = model  # Store model in app state
-    print("Model loaded successfully.")
+    app.state.model = model
+    print("Model 1 loaded successfully.")
     
+    # Download and load model 2 (3 classes)
+    file_id2 = "1G0aYGsqGK3aUbs7Ug_kPXi2QRcBhszTN"
+    url2 = f"https://drive.google.com/uc?id={file_id2}&confirm=t"
+    output2 = "lasttry6001424242000_model_new.h5"
+    gdown.download(url2, output2, quiet=False, fuzzy=True)
+    if not os.path.exists(output2):
+        raise RuntimeError("Failed to download model 2.")
+    app.state.model2 = tf.keras.models.load_model(output2)
+    print("Model 2 loaded successfully.")
+
     yield
-    
-    # Shutdown code (if needed)
     print("Shutting down...")
+
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(router=authentification, tags=["auth"], prefix="/auth")
