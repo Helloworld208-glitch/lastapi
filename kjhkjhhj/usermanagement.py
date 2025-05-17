@@ -74,6 +74,10 @@ class usermanagement(Adduser):
         if not file.content_type.startswith("image/"):
             raise HTTPException(status_code=400, detail="Not an image file")
         return await self.dontcallai( email=email,request=request,  file=file, authorization=authorization)
+    async def chk_pic22(self,request: Request,  file: UploadFile = File(...),  email: EmailStr = Body(...),  authorization: Annotated[Union[str, None], Header()] = None):
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Not an image file")
+        return await self.callai22( email=email,request=request,  file=file, authorization=authorization)    
 
 
 
