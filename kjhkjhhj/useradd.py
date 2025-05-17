@@ -54,6 +54,7 @@ from pydantic import EmailStr
 
 AUTH_PREFIX='Bearer ' 
 class_names = ['Normal', 'sick']
+class_names2 = ['Lung_Opacity', 'Normal', 'Pneumonia_Merged']
 class Adduser(Fatherclass):
   def create_user(self,Usercreate: Usercreate):
       new_user = Userr(**Usercreate.dict(exclude_none=True))
@@ -310,6 +311,30 @@ class Adduser(Fatherclass):
 
   
   from reportlab.lib.pagesizes import letter
+  async def results3(self, request: Request, file: UploadFile, email: EmailStr):
+    # Read the uploaded file
+    img = Image.open(io.BytesIO(await file.read()))
+    img = img.convert("RGB")
+    img = img.resize((224, 224))
+    img_array = np.array(img)
+
+    # Access model 2 from the app state
+    model2 = request.app.state.model2
+
+    # Make prediction
+    prediction = model2.predict(np.expand_dims(img_array, axis=0))
+    probabilities = tf.nn.softmax(prediction).numpy()
+    predicted_class_idx = np.argmax(probabilities)
+    confidence = probabilities[0][predicted_class_idx]
+    file.file.seek(0)
+
+    return await self.create_pdf_from(
+        file=file,
+        predicted_class=class_names2[predicted_class_idx],
+        confidence=round(confidence, 2),
+        email=email
+    )
+
   async def create_pdf_from_uploadfile(self, file: UploadFile, predicted_class: str, confidence: str, email: EmailStr) -> io.BytesIO:
     # Read and process the uploaded file
     contents = await file.read()
