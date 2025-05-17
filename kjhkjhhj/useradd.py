@@ -326,20 +326,24 @@ class Adduser(Fatherclass):
         return await self.results3(request, file,email)
   from reportlab.lib.pagesizes import letter
   async def results3(self, request: Request, file: UploadFile, email: EmailStr):
-    # Read the uploaded file
-    img = Image.open(io.BytesIO(await file.read()))
-    img = img.convert("RGB")
-    img = img.resize((224, 224))
-    img_array = np.array(img)
+    # Read & preprocess exactly like in Colab
+    data = await file.read()
+    img = Image.open(io.BytesIO(data)).convert("RGB").resize((224, 224))
+
+    # ← Normalize to [0,1] and add batch dimension
+    img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
 
     # Access model 2 from the app state
     model2 = request.app.state.model2
 
-    # Make prediction
-    prediction = model2.predict(np.expand_dims(img_array, axis=0))
-    probabilities = tf.nn.softmax(prediction).numpy()
+    # Make prediction on the normalized batch
+    prediction = model2.predict(img_array)
+    probabilities = tf.nn.softmax(prediction, axis=1).numpy()
     predicted_class_idx = np.argmax(probabilities)
     confidence = probabilities[0][predicted_class_idx]
+
+    # Reset file pointer for PDF creation
     file.file.seek(0)
 
     return await self.create_pdf_from(
