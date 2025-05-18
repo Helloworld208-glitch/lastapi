@@ -12,6 +12,7 @@ from sqlalchemy import or_, and_, distinct
 import json
 from user import ChatMessage
 
+
 ADMIN_ID = 44
 AUTH_PREFIX = "Bearer "
 authentification = APIRouter()
