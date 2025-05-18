@@ -95,7 +95,7 @@ class usermanagement(Adduser):
         payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     
         if payload :
-          new_premium_user = UserPremium(user_id=payload["user_id"]
+          new_premium_user = UserPremium(user_id=payload["user_id"])
           self.add(new_premium_user)
           self.commit()
           self.refresh(new_premium_user)
