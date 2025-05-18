@@ -10,7 +10,7 @@ from user import Appointment
 from datetime import date
 from schema import datemodel
 from sendmail import send_email
-
+from user import Userr, Appointment, Admin, UserPremium
 from typing import Annotated,Union
 from pydantic import EmailStr
 from fastapi import UploadFile, File, HTTPException, Body, Header
