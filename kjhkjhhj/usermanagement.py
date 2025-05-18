@@ -103,6 +103,21 @@ class usermanagement(Adduser):
           return "ok"
         else:
             raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa') 
+
+    def chk_premium(self,authorization:Annotated[Union[str,None],Header()]=None):
+       
+        auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
+        if not authorization:
+          raise auth_exeption
+        if not authorization.startswith(AUTH_PREFIX):
+          raise auth_exeption
+        payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+    
+        if payload and self.session.query(UserPremium).filter(UserPremium.user_id == payload["user_id"]).first():
+          
+          return true
+        else:
+          return false;
     def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
        
         auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
