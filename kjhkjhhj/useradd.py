@@ -327,7 +327,7 @@ class Adduser(Fatherclass):
         raise auth_exeption
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload:
-        if self.query(UserPremium).filter(UserPremium.user_id == payload["user_id"]).first():
+        if self.session.query(UserPremium).filter(UserPremium.user_id == payload["user_id"]).first():
           return await self.results3(request, file,email)
         else:
           raise premium_exception
