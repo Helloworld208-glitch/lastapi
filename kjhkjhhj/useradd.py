@@ -310,20 +310,27 @@ class Adduser(Fatherclass):
   async def callai22(
     self,
     email: EmailStr,
-    request: Request,  # Add request parameter
+    request: Request,  
     file: UploadFile = File(...),
     authorization: Annotated[Union[str, None], Header()] = None):
     auth_exeption = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail='error'
     )
+    premium_exception = HTTPException(
+    status_code=status.HTTP_403_FORBIDDEN, 
+    detail="Premium access required. Please upgrade your account to unlock this feature."
+        )  
     if not authorization:
         raise auth_exeption
     if not authorization.startswith(AUTH_PREFIX):
         raise auth_exeption
     payload = jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     if payload:
-        return await self.results3(request, file,email)
+        if self.query(UserPremium).filter(UserPremium.user_id == payload["user_id"]).first():
+          return await self.results3(request, file,email)
+        else:
+          raise premium_exception
   from reportlab.lib.pagesizes import letter
   async def results3(self, request: Request, file: UploadFile, email: EmailStr):
     # Read & preprocess exactly like in Colab
