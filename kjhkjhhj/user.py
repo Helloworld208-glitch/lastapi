@@ -37,7 +37,10 @@ class Admin(Base):
     user_id = Column(Integer, ForeignKey("User.id"), nullable=False, unique=True)
     role = Column(String(50), default="admin")  
 
-
+class UserPremium(Base):
+    __tablename__ = "user_premium"
+    
+    user_id = Column(Integer, ForeignKey("User.id"), primary_key=True)
 
 
 
