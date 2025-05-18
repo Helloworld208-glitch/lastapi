@@ -96,9 +96,9 @@ class usermanagement(Adduser):
     
         if payload :
           new_premium_user = UserPremium(user_id=payload["user_id"])
-          self.add(new_premium_user)
-          self.commit()
-          self.refresh(new_premium_user)
+          self.session.add(new_premium_user)
+          self.session.commit()
+          self.session.refresh(new_premium_user)
           return "ok"
         else:
             raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa') 
