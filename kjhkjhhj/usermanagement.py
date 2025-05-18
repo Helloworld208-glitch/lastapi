@@ -118,9 +118,9 @@ class usermanagement(Adduser):
     
         if payload and self.session.query(UserPremium).filter(UserPremium.user_id == payload["user_id"]).first():
           
-          return true
+          return True
         else:
-          return false
+          return False
     def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
        
         auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
