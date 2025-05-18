@@ -117,7 +117,7 @@ class usermanagement(Adduser):
           
           return true
         else:
-          return false;
+          return false
     def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
        
         auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
