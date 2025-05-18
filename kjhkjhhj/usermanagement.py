@@ -3,7 +3,7 @@ from schema import Usercreate, userinlogin
 from security.codingdata import encrypt
 from security.jwt import jwtclass
 from fastapi import HTTPException, Header, status, File, UploadFile, Body
-from user import Userr, Appointment, Admin
+from user import Userr, Appointment, Admin, UserPremium
 from database import get_db
 from pydantic import EmailStr
 from datetime import date
@@ -85,7 +85,23 @@ class usermanagement(Adduser):
 
 
 
+    def add_premium(self,authorization:Annotated[Union[str,None],Header()]=None):
+       
+        auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
+        if not authorization:
+          raise auth_exeption
+        if not authorization.startswith(AUTH_PREFIX):
+          raise auth_exeption
+        payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
     
+        if payload :
+        new_premium_user = UserPremium(user_id=payload["user_id"]
+          self.add(new_premium_user)
+          self.commit()
+          self.refresh(new_premium_user)
+          return "ok"
+        else:
+            raise HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='ErrorOrNothinaaaaaaaaaaaaa') 
     def get_admin_app(self,authorization:Annotated[Union[str,None],Header()]=None):
        
         auth_exeption=HTTPException(status_code =status.HTTP_401_UNAUTHORIZED,detail='error')
