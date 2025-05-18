@@ -82,6 +82,13 @@ def get_admin_patients(
 ):
     return usermanagement(session).get_admin_app(authorization=authorization)
 
+
+@authentification.post("/addusertopremium")
+def get_admin_patients(
+    authorization: Annotated[Union[str, None], Header()] = None,
+    session=Depends(get_db)
+):
+    return usermanagement(session).add_premium(authorization=authorization)
 @authentification.post("/adminuploadtouser")
 async def admin_upload(
     request: Request,
