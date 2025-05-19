@@ -94,7 +94,7 @@ class Adduser(Fatherclass):
   
 
 
-  def get_user_email_by_id(self,authorization:Annotated[Union[str,None],Header()]=None):
+  def get_user_name_email(self,authorization:Annotated[Union[str,None],Header()]=None):
     auth_exeption = HTTPException(
       status_code= status.HTTP_401_UNAUTHORIZED,detail='u cant')
     if not authorization:
