@@ -21,7 +21,7 @@ class usermanagement(Adduser):
     def __init__(self, session):
         super().__init__(session)
     def get_user_email(self, authorization:Annotated[Union[str,None],Header()]=None):
-       return self.get_user_name_email_id(authorization= authorization)
+       return self.get_user_name_email(authorization= authorization)
         
     def sign_up_user(self, user: Usercreate, background_tasks: BackgroundTasks):  # Fixed type annotation
         if self.chk_user_email(user.email):
