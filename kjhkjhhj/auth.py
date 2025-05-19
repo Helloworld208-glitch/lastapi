@@ -30,7 +30,9 @@ def sign_up_user_endpoint(Usercreate: Usercreate, background_tasks: BackgroundTa
 @authentification.post("/getname")
 def get_user_name_endpoint(authorization: Annotated[Union[str, None], Header()] = None, session=Depends(get_db)):
     return usermanagement(session).get_user_name(authorization=authorization)
-
+@authentification.post("/getemail")
+def get_user_name_endpoint(authorization: Annotated[Union[str, None], Header()] = None, session=Depends(get_db)):
+    return usermanagement(session).get_user_email_by_id(authorization=authorization)
 @authentification.post("/addappointement")
 def add_appointement(
     Date: date = Body(..., embed=True),
