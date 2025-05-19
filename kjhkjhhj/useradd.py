@@ -94,7 +94,22 @@ class Adduser(Fatherclass):
   
 
 
-
+  def get_user_email_by_id(self,authorization:Annotated[Union[str,None],Header()]=None):
+    auth_exeption = HTTPException(
+      status_code= status.HTTP_401_UNAUTHORIZED,detail='u cant')
+    if not authorization:
+      raise auth_exeption
+    if not authorization.startswith(AUTH_PREFIX):
+      raise   auth_exeption
+    payload= jwtclass.chk_token(token=authorization[len(AUTH_PREFIX):])
+    if payload and payload['user_id']:
+     result = self.session.query(Userr.email).filter_by(id=payload['user_id']).first()
+     if result:
+        
+        return  result
+     else:
+        raise auth_exeption 
+      
   def get_user_name_by_id(self, authorization: Annotated[Union[str, None], Header()] = None):
       auth_exception = HTTPException(
           status_code=status.HTTP_401_UNAUTHORIZED, detail='u cant'
