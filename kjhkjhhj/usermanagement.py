@@ -20,7 +20,7 @@ AUTH_PREFIX='Bearer '
 class usermanagement(Adduser):
     def __init__(self, session):
         super().__init__(session)
-    def get_user_email(self, authorization:Annotated[Union[str,None],Header()]=None):
+    def get_user_email_by_id(self, authorization:Annotated[Union[str,None],Header()]=None):
        return self.get_user_name_email(authorization= authorization)
         
     def sign_up_user(self, user: Usercreate, background_tasks: BackgroundTasks):  # Fixed type annotation
