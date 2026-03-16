@@ -16,7 +16,7 @@ import io
 from PIL import Image
 import numpy as np
 import os
-
+#classes
 class_names = ['Normal', 'sick']
 class_names2 = ['Lung_Opacity', 'Normal', 'Pneumonia_Merged']
 templates = Jinja2Templates(directory="templates")
